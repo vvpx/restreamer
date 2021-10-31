@@ -104,8 +104,8 @@ class RestreamerData {
 
                     if(!('player' in dbdata.options)) {
                         dbdata.options.player = {
-                            autoplay: false,
-                            mute: false,
+                            autoplay: true,
+                            mute: ture,
                             statistics: false,
                             color: '#3daa48',
                             logo: {
