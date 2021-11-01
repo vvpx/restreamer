@@ -55,11 +55,12 @@ RUN mkdir -p /dist && cd /dist && \
 
 # ffmpeg && patch
 # COPY ./contrib/ffmpeg /dist/restreamer/contrib/ffmpeg
+# patch -p1 < /dist/restreamer/contrib/ffmpeg/bitrate.patch && \
 
 RUN mkdir -p /dist && cd /dist && \
     curl -OL "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
     tar -xvz -f ffmpeg-${FFMPEG_VERSION}.tar.gz && \
-    cd ffmpeg-${FFMPEG_VERSION} && \ # patch -p1 < /dist/restreamer/contrib/ffmpeg/bitrate.patch && \
+    cd ffmpeg-${FFMPEG_VERSION} && \
     ./configure \
     --bindir="${SRC}/bin" \
     --extra-cflags="-I${SRC}/include" \
