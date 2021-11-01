@@ -6,7 +6,7 @@ MAINTAINER datarhei <info@datarhei.org>
 
 ARG NASM_VERSION=2.14.02
 ARG LAME_VERSION=3.100
-ARG FFMPEG_VERSION=4.3.1
+ARG FFMPEG_VERSION=4.3.3
 ARG NGINX_VERSION=1.21.3
 ARG NGINXRTMP_VERSION=1.2.2
 ARG NODE_VERSION=16.9.1
@@ -54,13 +54,12 @@ RUN mkdir -p /dist && cd /dist && \
     make install
 
 # ffmpeg && patch
-COPY ./contrib/ffmpeg /dist/restreamer/contrib/ffmpeg
+# COPY ./contrib/ffmpeg /dist/restreamer/contrib/ffmpeg
 
 RUN mkdir -p /dist && cd /dist && \
     curl -OL "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
     tar -xvz -f ffmpeg-${FFMPEG_VERSION}.tar.gz && \
-    cd ffmpeg-${FFMPEG_VERSION} && \
-    patch -p1 < /dist/restreamer/contrib/ffmpeg/bitrate.patch && \
+    cd ffmpeg-${FFMPEG_VERSION} && \ # patch -p1 < /dist/restreamer/contrib/ffmpeg/bitrate.patch && \
     ./configure \
     --bindir="${SRC}/bin" \
     --extra-cflags="-I${SRC}/include" \
