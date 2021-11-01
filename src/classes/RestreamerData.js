@@ -61,7 +61,7 @@ class RestreamerData {
 
                     if(!('audio' in dbdata.options)) {
                         dbdata.options.audio = {
-                            codec: 'silence',
+                            codec: 'auto',
                             preset: 'silence',
                             bitrate: '64',
                             channels: 'mono',
