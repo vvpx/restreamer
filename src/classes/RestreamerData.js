@@ -200,6 +200,39 @@ class RestreamerData {
                     }
                 };
 
+                // Update the defaults according to RS_AUDIO
+                switch(process.env.RS_AUDIO) {
+                    case 'auto':
+                        defaultStructure.options.audio.codec = 'auto';
+                        break;
+                    case 'none':
+                        defaultStructure.options.audio.codec = 'none';
+                        break;
+                    case 'silence':
+                        defaultStructure.options.audio.codec = 'aac';
+                        defaultStructure.options.audio.preset = 'silence';
+                        defaultStructure.options.audio.bitrate = '8';
+                        defaultStructure.options.audio.channels = 'mono';
+                        defaultStructure.options.audio.sampling = '44100';
+                        break;
+                    case 'aac':
+                        defaultStructure.options.audio.codec = 'aac';
+                        defaultStructure.options.audio.preset = 'encode';
+                        defaultStructure.options.audio.bitrate = '64';
+                        defaultStructure.options.audio.channels = 'inherit';
+                        defaultStructure.options.audio.sampling = 'inherit';
+                        break;
+                    case 'mp3':
+                        defaultStructure.options.audio.codec = 'mp3';
+                        defaultStructure.options.audio.preset = 'encode';
+                        defaultStructure.options.audio.bitrate = '64';
+                        defaultStructure.options.audio.channels = 'inherit';
+                        defaultStructure.options.audio.sampling = 'inherit';
+                        break;
+                    default:
+                        break;
+                }
+            
                 // Set stream source and start streaming on a fresh installation
                 if(process.env.RS_INPUTSTREAM != '') {
                     defaultStructure.addresses.srcAddress = process.env.RS_INPUTSTREAM;
