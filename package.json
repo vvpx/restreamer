@@ -1,5 +1,5 @@
 {
-  "name": "Restreamer",
+  "name": "restreamer",
   "version": "0.6.8",
   "description": "Allows you to do h.264 video streaming on your website without a streaming provider",
   "author": "datarhei.org",
@@ -38,7 +38,7 @@
     "babel-loader": "8.2.2",
     "babel-preset-env": "^1.7.0",
     "coffeescript": "^2.3.2",
-    "eslint": "4.18.2",
+    "eslint": "^8.1.0",
     "grunt": "^1.4.0",
     "grunt-babel": "7.0.0",
     "grunt-contrib-csslint": "2.0.0",

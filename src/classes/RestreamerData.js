@@ -4,9 +4,17 @@
  * @copyright 2015 datarhei.org
  * @license Apache-2.0
  */
+
 'use strict';
 
+// import { readFile, existsSync, mkdirSync, writeFileSync } from 'fs';
+// //import { readFile, existsSync, mkdirSync, writeFileSync } from 'fs/promises';
+// import { defer, nfcall } from 'q';
+// import { join } from 'path';
+// import { Validator } from 'jsonschema';
+
 const fs = require('fs');
+const fsp = require('fs/promises');
 const Q = require('q');
 const path = require('path');
 const Validator = require('jsonschema').Validator;
@@ -19,20 +27,59 @@ const dbFile = 'v1.json';
 const confPath = path.join(global.__base, 'conf');
 const schemaFile = 'jsondb_v1_schema.json';
 
+// Update the defaults according to RS_AUDIO
+function setDbAudio (dbdata) {
+    var audioNode = dbdata.options.audio;
+
+    switch(process.env.RS_AUDIO) {
+        case 'auto':
+            audioNode.codec = 'auto';
+            break;
+        case 'none':
+            audioNode.codec = 'none';
+            break;
+        case 'silence':
+            audioNode.codec = 'aac';
+            audioNode.preset = 'silence';
+            audioNode.bitrate = '8';
+            audioNode.channels = 'mono';
+            audioNode.sampling = '44100';
+            break;
+        case 'aac':
+            audioNode.codec = 'aac';
+            audioNode.preset = 'encode';
+            audioNode.bitrate = '64';
+            audioNode.channels = 'inherit';
+            audioNode.sampling = 'inherit';
+            break;
+        case 'mp3':
+            audioNode.codec = 'mp3';
+            audioNode.preset = 'encode';
+            audioNode.bitrate = '64';
+            audioNode.channels = 'inherit';
+            audioNode.sampling = 'inherit';
+            break;
+        default:
+            break;
+    }
+}
+
 class RestreamerData {
 
     static checkJSONDb () {
         var schemadata = {};
         var dbdata = {};
         var deferred = Q.defer();
-        var readSchema = Q.nfcall(fs.readFile, path.join(confPath, schemaFile));
-        var readDBFile = Q.nfcall(fs.readFile, path.join(dbPath, dbFile));
+        //var readSchema = nfcall(readFile, join(confPath, schemaFile));
+       // var readDBFile = nfcall(readFile, join(dbPath, dbFile));
 
         logger.info('Checking jsondb file...');
-        readSchema
+
+        //readSchema
+        fsp.readFile(path.join(confPath, schemaFile))
             .then((s) => {
                 schemadata = JSON.parse(s.toString('utf8'));
-                return readDBFile;
+                return fsp.readFile(path.join(dbPath, dbFile)); // readDBFile;
             })
             .then((d) => {
                 dbdata = JSON.parse(d.toString('utf8'));
@@ -69,37 +116,7 @@ class RestreamerData {
                         };
 
                         // Update the defaults according to RS_AUDIO
-                        switch(process.env.RS_AUDIO) {
-                            case 'auto':
-                                dbdata.options.audio.codec = 'auto';
-                                break;
-                            case 'none':
-                                dbdata.options.audio.codec = 'none';
-                                break;
-                            case 'silence':
-                                dbdata.options.audio.codec = 'aac';
-                                dbdata.options.audio.preset = 'silence';
-                                dbdata.options.audio.bitrate = '8';
-                                dbdata.options.audio.channels = 'mono';
-                                dbdata.options.audio.sampling = '44100';
-                                break;
-                            case 'aac':
-                                dbdata.options.audio.codec = 'aac';
-                                dbdata.options.audio.preset = 'encode';
-                                dbdata.options.audio.bitrate = '64';
-                                dbdata.options.audio.channels = 'inherit';
-                                dbdata.options.audio.sampling = 'inherit';
-                                break;
-                            case 'mp3':
-                                dbdata.options.audio.codec = 'mp3';
-                                dbdata.options.audio.preset = 'encode';
-                                dbdata.options.audio.bitrate = '64';
-                                dbdata.options.audio.channels = 'inherit';
-                                dbdata.options.audio.sampling = 'inherit';
-                                break;
-                            default:
-                                break;
-                        }
+                        setDbAudio(dbdata);
                     }
 
                     if(!('player' in dbdata.options)) {
@@ -133,9 +150,7 @@ class RestreamerData {
                         dbdata.options.output.hls.timeout = '10';
                     }
 
-                    if (!fs.existsSync(dbPath)) {
-                        fs.mkdirSync(dbPath);
-                    }
+                    if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
                     fs.writeFileSync(path.join(dbPath, dbFile), JSON.stringify(dbdata));
 
                     deferred.resolve();
@@ -201,37 +216,7 @@ class RestreamerData {
                 };
 
                 // Update the defaults according to RS_AUDIO
-                switch(process.env.RS_AUDIO) {
-                    case 'auto':
-                        defaultStructure.options.audio.codec = 'auto';
-                        break;
-                    case 'none':
-                        defaultStructure.options.audio.codec = 'none';
-                        break;
-                    case 'silence':
-                        defaultStructure.options.audio.codec = 'aac';
-                        defaultStructure.options.audio.preset = 'silence';
-                        defaultStructure.options.audio.bitrate = '8';
-                        defaultStructure.options.audio.channels = 'mono';
-                        defaultStructure.options.audio.sampling = '44100';
-                        break;
-                    case 'aac':
-                        defaultStructure.options.audio.codec = 'aac';
-                        defaultStructure.options.audio.preset = 'encode';
-                        defaultStructure.options.audio.bitrate = '64';
-                        defaultStructure.options.audio.channels = 'inherit';
-                        defaultStructure.options.audio.sampling = 'inherit';
-                        break;
-                    case 'mp3':
-                        defaultStructure.options.audio.codec = 'mp3';
-                        defaultStructure.options.audio.preset = 'encode';
-                        defaultStructure.options.audio.bitrate = '64';
-                        defaultStructure.options.audio.channels = 'inherit';
-                        defaultStructure.options.audio.sampling = 'inherit';
-                        break;
-                    default:
-                        break;
-                }
+                setDbAudio(defaultStructure);
             
                 // Set stream source and start streaming on a fresh installation
                 if(process.env.RS_INPUTSTREAM != '') {
@@ -249,12 +234,12 @@ class RestreamerData {
 
 
                 logger.debug(`Error reading "v1.db": ${error.toString()}`);
-                if (!fs.existsSync(dbPath)) {
-                    fs.mkdirSync(dbPath);
-                }
+
+                if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
                 fs.writeFileSync(path.join(dbPath, dbFile), JSON.stringify(defaultStructure));
                 deferred.resolve();
             });
+
         return deferred.promise;
     }
 }
