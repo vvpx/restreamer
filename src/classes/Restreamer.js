@@ -984,25 +984,27 @@ class Restreamer {
      * check for updates
      */
     static checkForUpdates() {
-        const url = {'host': 'datarhei.com', 'path': '/apps.json'};
-        logger.debug('Checking for updates...', 'checkForUpdates');
-        https.get(url, (response) => {
-            if (response.statusCode === 200) {
-                response.on('data', (body) => {
-                    var updateCheck = JSON.parse(body);
-                    var updateAvailable = require('semver').lt(packageJson.version, updateCheck.restreamer.version);
-                    logger.info(`Update checking succeeded. ${updateAvailable ? 'Update' : 'No updates'} available`, 'checkForUpdates');
-                    logger.debug(`local: ${packageJson.version}; remote: ${updateCheck.restreamer.version}`, 'checkForUpdates');
-                    Restreamer.data.updateAvailable = updateAvailable;
-                    WebsocketsController.emit('update', updateAvailable);
-                });
-            } else {
-                logger.warn(`Got ${String(response.statusCode)} status while trying to fetch update info`, 'checkForUpdates');
-            }
-        }).on('error', () => {
-            logger.warn('Failed fetching update info', 'checkForUpdates');
-        });
-        setTimeout(Restreamer.checkForUpdates, 12 * 3600 * 1000);
+        logger.info('Update checking disabled, skip...');
+
+        // const url = {'host': 'datarhei.com', 'path': '/apps.json'};
+        // logger.debug('Checking for updates...', 'checkForUpdates');
+        // https.get(url, (response) => {
+        //     if (response.statusCode === 200) {
+        //         response.on('data', (body) => {
+        //             var updateCheck = JSON.parse(body);
+        //             var updateAvailable = require('semver').lt(packageJson.version, updateCheck.restreamer.version);
+        //             logger.info(`Update checking succeeded. ${updateAvailable ? 'Update' : 'No updates'} available`, 'checkForUpdates');
+        //             logger.debug(`local: ${packageJson.version}; remote: ${updateCheck.restreamer.version}`, 'checkForUpdates');
+        //             Restreamer.data.updateAvailable = updateAvailable;
+        //             WebsocketsController.emit('update', updateAvailable);
+        //         });
+        //     } else {
+        //         logger.warn(`Got ${String(response.statusCode)} status while trying to fetch update info`, 'checkForUpdates');
+        //     }
+        // }).on('error', () => {
+        //     logger.warn('Failed fetching update info', 'checkForUpdates');
+        // });
+        // setTimeout(Restreamer.checkForUpdates, 12 * 3600 * 1000);
     }
 
     /**
