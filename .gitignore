@@ -41,6 +41,7 @@ Thumbs.db
 # IDE / Editor files #
 ######################
 .idea
+.vscode
 .settings
 nbproject
 
