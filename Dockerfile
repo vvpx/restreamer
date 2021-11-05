@@ -2,7 +2,7 @@ ARG IMAGE=amd64/debian:10.4-slim
 
 FROM $IMAGE as builder
 
-MAINTAINER datarhei <info@datarhei.org>
+# MAINTAINER datarhei <info@datarhei.org>
 
 ARG NASM_VERSION=2.14.02
 ARG LAME_VERSION=3.100

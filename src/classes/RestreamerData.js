@@ -7,15 +7,8 @@
 
 'use strict';
 
-// import { readFile, existsSync, mkdirSync, writeFileSync } from 'fs';
-// //import { readFile, existsSync, mkdirSync, writeFileSync } from 'fs/promises';
-// import { defer, nfcall } from 'q';
-// import { join } from 'path';
-// import { Validator } from 'jsonschema';
-
 const fs = require('fs');
 const fsp = require('fs/promises');
-const Q = require('q');
 const path = require('path');
 const Validator = require('jsonschema').Validator;
 
@@ -67,11 +60,12 @@ function setDbAudio (dbdata) {
 class RestreamerData {
 
     static checkJSONDb () {
+        return new Promise(this.__checkJSONDb);
+    }
+
+    static __checkJSONDb (resolve, reject) {
         var schemadata = {};
         var dbdata = {};
-        var deferred = Q.defer();
-        //var readSchema = nfcall(readFile, join(confPath, schemaFile));
-       // var readDBFile = nfcall(readFile, join(dbPath, dbFile));
 
         logger.info('Checking jsondb file...');
 
@@ -79,7 +73,7 @@ class RestreamerData {
         fsp.readFile(path.join(confPath, schemaFile))
             .then((s) => {
                 schemadata = JSON.parse(s.toString('utf8'));
-                return fsp.readFile(path.join(dbPath, dbFile)); // readDBFile;
+                return fsp.readFile(path.join(dbPath, dbFile));
             })
             .then((d) => {
                 dbdata = JSON.parse(d.toString('utf8'));
@@ -93,6 +87,7 @@ class RestreamerData {
                     throw new Error(JSON.stringify(validateResult.errors));
                 } else {
                     logger.debug('"v1.db" is valid');
+                    logger.info('"v1.db" is valid');
 
                     // Fill up optional fields if not present
                     if(!('video' in dbdata.options)) {
@@ -152,11 +147,12 @@ class RestreamerData {
 
                     if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
                     fs.writeFileSync(path.join(dbPath, dbFile), JSON.stringify(dbdata));
-
-                    deferred.resolve();
+                    resolve();
                 }
             })
             .catch((error) => {
+                logger.info('create new "v1.db"');
+
                 var defaultStructure = {
                     addresses: {
                         srcAddress: '',
@@ -237,10 +233,8 @@ class RestreamerData {
 
                 if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
                 fs.writeFileSync(path.join(dbPath, dbFile), JSON.stringify(defaultStructure));
-                deferred.resolve();
+                resolve();
             });
-
-        return deferred.promise;
     }
 }
 
