@@ -20,7 +20,7 @@ env.init(config);
 const packageJson = require(path.join('..', 'package.json'));
 const logger = require('./classes/Logger')('start');
 const nginxrtmp = require('./classes/Nginxrtmp')(config);
-const Q = require('q');
+//const Q = require('q');
 const Restreamer = require('./classes/Restreamer');
 const RestreamerData = require('./classes/RestreamerData');
 const restreamerApp = require('./webserver/app');
@@ -51,10 +51,7 @@ if(env.hasErrors()) {
 }
 
 // start the app
-nginxrtmp.start(process.env.RS_HTTPS == "true")
-    .then(() => {
-        return RestreamerData.checkJSONDb();
-    })
+RestreamerData.checkJSONDb()
     .then(() => {
         Restreamer.checkForUpdates();
         Restreamer.getPublicIp();
@@ -62,8 +59,8 @@ nginxrtmp.start(process.env.RS_HTTPS == "true")
         return restreamerApp.startWebserver();
     })
     .then(() => {
-        return Q.fcall(Restreamer.restoreProcesses);
+        return nginxrtmp.start(process.env.RS_HTTPS == "true")
     })
-    .catch((error) => {
+    .then(Restreamer.restoreProcesses, (error) => {
         logger.error('Error starting webserver and nginx for application: ' + error);
     });
