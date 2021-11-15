@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * @file holds the code for the class Nginx
  * @link https://github.com/datarhei/restreamer
@@ -6,12 +8,14 @@
  */
 'use strict';
 
-const Q = require('q');
+//const Q = require('q');
 const config = require('../../conf/live.json');
-const proc = require('process');
+//const proc = require('process');
 const spawn = require('child_process').spawn;
 const logger = require('./Logger')('NGINX');
-const rp = require('request-promise');
+//const rp = require('request-promise');
+const http = require('http');
+
 
 /**
  * Class to watch and control the NGINX RTMP server process
@@ -36,10 +40,10 @@ class Nginxrtmp {
      */
     async start(useSSL) {
         this.logger.info('Starting ...');
-        let timeout = 250;
+        let timeout = 256;
         let abort = false;
 
-        if(useSSL == false) {
+        if (useSSL == false) {
             this.process = spawn(this.config.nginx.command, this.config.nginx.args);
         }
         else {
@@ -50,9 +54,9 @@ class Nginxrtmp {
         this.process.stdout.on('data', (data) => {
             let lines = data.toString().split(/[\r\n]+/);
 
-            for(let i = 0; i < lines.length; i++) {
+            for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].replace(/^.*\]/, '').trim();
-                if(line.length == 0) {
+                if (line.length == 0) {
                     continue;
                 }
 
@@ -63,9 +67,9 @@ class Nginxrtmp {
         this.process.stderr.on('data', (data) => {
             let lines = data.toString().split(/[\r\n]+/);
 
-            for(let i = 0; i < lines.length; i++) {
+            for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].replace(/^.*\]/, '').trim();
-                if(line.length == 0) {
+                if (line.length == 0) {
                     continue;
                 }
 
@@ -78,11 +82,11 @@ class Nginxrtmp {
 
             this.logger.error('Exited with code: ' + code);
 
-            if(code < 0) {
+            if (code < 0) {
                 return;
             }
 
-            if(this.allowRestart == true) {
+            if (this.allowRestart == true) {
                 let self = this;
                 setTimeout(() => {
                     self.logger.info('Trying to restart ...');
@@ -96,15 +100,10 @@ class Nginxrtmp {
         });
 
         let running = false;
+        let pz = new Promise(resolve => setTimeout(resolve, timeout));
+        while (!abort && !(running = await pz.then(this.isRunning))) logger.info(`isRunning: ${running}`);
 
-        while(running == false){
-            running = await this.isRunning(timeout);
-            if(abort == true) {
-                break;
-            }
-        }
-
-        if(running == false) {
+        if (running == false) {
             this.process = null;
             throw new Error('Failed to start');
         }
@@ -120,17 +119,29 @@ class Nginxrtmp {
      * Get current state of the NGINX server
      * @returns {Promise.<boolean>}
      */
-    async isRunning(delay) {
-        const url = "http://" + config.nginx.streaming.ip + ":" +  config.nginx.streaming.http_port  +  config.nginx.streaming.http_health_path;
-
-        try {
-            await Q.delay(delay); // delay the state detection by the given amount of milliseconds
-            const response = await rp(url);
-            return (response == 'pong');
-        } catch(error) {
-            return false;
-        }
+    isRunning() {
+        const url = "http://" + config.nginx.streaming.ip + ":" + config.nginx.streaming.http_port + config.nginx.streaming.http_health_path;
+        return new Promise(resolve => 
+            http.get(url, res => resolve(res.statusCode == 200))
+            .on('error', () => resolve(false))
+        )
     }
+
+    // /**
+    //  * Get current state of the NGINX server
+    //  * @returns {Promise.<boolean>}
+    //  */
+    // async isRunning(delay) {
+    //     const url = "http://" + config.nginx.streaming.ip + ":" +  config.nginx.streaming.http_port  +  config.nginx.streaming.http_health_path;
+
+    //     try {
+    //         await Q.delay(delay); // delay the state detection by the given amount of milliseconds
+    //         const response = await rp(url);
+    //         return (response == 'pong');
+    //     } catch(error) {
+    //         return false;
+    //     }
+    // }
 }
 
 module.exports = (config) => {

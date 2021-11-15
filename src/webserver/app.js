@@ -10,12 +10,12 @@ const express = require("express");
 const session = require("express-session");
 const cookie = require("cookie");
 const cookieParser = require("cookie-parser");
-const bodyParser = require("body-parser");
+// const bodyParser = require("body-parser");
 const compression = require("compression");
 
 // other
 const path = require("path");
-const Q = require("q");
+const Q = require('../classes/MyQ.js');
 const crypto = require("crypto");
 
 // modules
@@ -55,7 +55,7 @@ class RestreamerExpressApp {
     useSessions() {
         this.app.use(
             session({
-                resave: true,
+                resave: false,
                 saveUninitialized: false,
                 key: this.sessionKey,
                 secret: this.secretKey,
@@ -69,7 +69,7 @@ class RestreamerExpressApp {
      * add automatic parsers for the body
      */
     addParsers() {
-        this.app.use(bodyParser.json());
+        this.app.use(express.json()); // bodyParser.json());
         this.app.use(cookieParser());
     }
 
@@ -210,7 +210,7 @@ class RestreamerExpressApp {
     initProd() {
         logger.debug("Init webserver with PROD environment");
         this.initAlways();
-        this.app.get("/", (req, res) => {
+        this.app.get("/", (_req, res) => {
             res.sendFile(path.join(global.__public, "index.prod.html"));
         });
         this.add404ErrorHandling();

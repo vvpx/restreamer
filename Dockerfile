@@ -1,4 +1,5 @@
-ARG IMAGE=amd64/debian:10.4-slim
+ARG IMAGE=amd64/debian:bullseye-slim
+#ARG IMAGE=amd64/debian:10.4-slim
 
 FROM $IMAGE as builder
 
@@ -136,9 +137,8 @@ RUN cd /restreamer && \
     curl && \
     apt autoremove -y
 
-EXPOSE 8080
-EXPOSE 8181
+EXPOSE 8080 8181
 
-VOLUME ["/restreamer/db"]
+# VOLUME ["/restreamer/db"]
 
 CMD ["./run.sh"]

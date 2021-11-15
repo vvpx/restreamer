@@ -59,8 +59,11 @@ RestreamerData.checkJSONDb()
         return restreamerApp.startWebserver();
     })
     .then(() => {
-        return nginxrtmp.start(process.env.RS_HTTPS == "true")
+        return nginxrtmp.start(process.env.RS_HTTPS == "true");
     })
-    .then(Restreamer.restoreProcesses, (error) => {
+    .then(() => {
+        Restreamer.restoreProcesses();
+     })
+    .catch(error => {
         logger.error('Error starting webserver and nginx for application: ' + error);
     });

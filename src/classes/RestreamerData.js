@@ -20,7 +20,9 @@ const dbFile = 'v1.json';
 const confPath = path.join(global.__base, 'conf');
 const schemaFile = 'jsondb_v1_schema.json';
 
-// Update the defaults according to RS_AUDIO
+/**
+* Update the defaults according to RS_AUDIO
+*/
 function setDbAudio (dbdata) {
     var audioNode = dbdata.options.audio;
 
@@ -63,7 +65,7 @@ class RestreamerData {
         return new Promise(this.__checkJSONDb);
     }
 
-    static __checkJSONDb (resolve, reject) {
+    static __checkJSONDb (resolve, _reject) {
         var schemadata = {};
         var dbdata = {};
 
@@ -110,7 +112,6 @@ class RestreamerData {
                             sampling: '44100'
                         };
 
-                        // Update the defaults according to RS_AUDIO
                         setDbAudio(dbdata);
                     }
 

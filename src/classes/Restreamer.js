@@ -12,12 +12,12 @@ const config = require(path.join(global.__base, 'conf', 'live.json'));
 const logger = require('./Logger')('Restreamer');
 const WebsocketsController = require('./WebsocketsController');
 const FfmpegCommand = require('fluent-ffmpeg');
-const Q = require('q');
+const Q = require('../classes/MyQ.js');
 const JsonDB = require('node-json-db');
 const publicIp = require('public-ip');
 const execFile = require('child_process').execFile;
-const packageJson = require(path.join(global.__base, 'package.json'));
-const https = require('https');
+//const packageJson = require(path.join(global.__base, 'package.json'));
+//const https = require('https');
 
 /**
  * class Restreamer creates and manages streams through ffmpeg
@@ -290,7 +290,8 @@ class Restreamer {
 
     /**
      * append the ffmpeg options of the config file to an output
-     * @param {string} rtmpUrl
+     * @param {string} streamUrl
+     * @param {string} streamType
      * @return {Promise}
      */
     static probeStream(streamUrl, streamType) {
