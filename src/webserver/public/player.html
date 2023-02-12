@@ -57,6 +57,8 @@
     var mute = convertBoolParam("mute", playerConfig.mute);
     var stats = convertBoolParam("stats", playerConfig.stats);
     var color = convertColorParam("color", playerConfig.color);
+    var src = getQueryParam("src", 'live.stream.m3u8');
+    if (src != 'live.stream.m3u8') src += '/index.m3u8';
 
     var plugins = [];
 
@@ -66,7 +68,7 @@
     }
 
     var config = {
-        source: 'hls/live.stream.m3u8',
+        source: 'hls/' + src,
         parentId: '#player',
         baseUrl: 'libs/scripts/',
         plugins: plugins,

@@ -1,3 +1,10 @@
+## Changes from 0.7.1 to 0.7.2
+
+* Установка nasm из репозитария
+* ffmpeg 4.4.3
+* Nginx 1.22.1
+* Оптимизация образа
+
 ## Changes from 0.6.7 to 0.6.8
 
 * Fix probing RTSP sources
