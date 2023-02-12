@@ -189,7 +189,7 @@
             "timeout": "30000"
         },
         "monitor": {
-            "restart_wait": "6000",
+            "restart_wait": "8000",
             "stale_wait": "60000"
         }
     },
@@ -259,7 +259,7 @@
                 "RS_SNAPSHOT_REFRESH_INTERVAL"
             ],
             "type": "string",
-            "defaultValue": "1m",
+            "defaultValue": "5m",
             "required": false,
             "description": "Interval for new snapshots (in milliseconds, use suffix 's' for seconds, 'm' for minutes). Use a value of 0 to disable snapshots."
         },

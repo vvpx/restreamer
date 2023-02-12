@@ -16,7 +16,10 @@ class Qdefer {
             this.#__event.once('q', args => (args[0] ? resolve : reject)(args[1]));
         });
     }
-    
+
+    /**
+     * @param {boolean} bResolve - promise resolution
+     */
     #resolution(bResolve, value) { this.#__event.emit('q', [bResolve, value]) };
 
     reject(reason) { this.#resolution(false, reason); }

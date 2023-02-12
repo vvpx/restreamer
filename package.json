@@ -1,6 +1,6 @@
 {
   "name": "restreamer",
-  "version": "0.7.0",
+  "version": "0.7.2",
   "description": "Allows you to do h.264 video streaming on your website without a streaming provider",
   "author": "datarhei.org",
   "repository": {
@@ -15,12 +15,13 @@
     "compression": "^1.7.3",
     "cookie": "0.4.1",
     "cookie-parser": "1.4.3",
+    "core-js": "3.26.1",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "fluent-ffmpeg": "^2.1.2",
     "jsonschema": "1.2.0",
-    "moment-timezone": "0.5.13",
-    "node-json-db": "0.7.3",
+    "moment-timezone": "0.5.40",
+    "node-json-db": "0.8.1",
     "printf": "^0.6.1",
     "public-ip": "^2.4.0",
     "socket.io": "^4.0.0"
