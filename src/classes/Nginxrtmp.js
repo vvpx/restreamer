@@ -36,7 +36,8 @@ class Nginxrtmp {
 
     /**
      * Start the NGINX server
-     * @returns {Promise.<boolean>}
+     * @returns {Promise<boolean>}
+     * @param {boolean} useSSL
      */
     async start(useSSL) {
         this.logger.info('Starting ...');
