@@ -1,9 +1,6 @@
 ARG IMAGE=amd64/debian:buster-slim
-#ARG IMAGE=amd64/debian:bullseye-slim
 
 FROM $IMAGE as builder
-
-# MAINTAINER datarhei <info@datarhei.org>
 
 ARG NASM_VERSION=2.14.02
 # ARG LAME_VERSION=3.100
@@ -82,7 +79,7 @@ RUN mkdir -p /dist && cd /dist && \
     # --enable-static \
     # --disable-static \
     # --disable-encoders \
-    --disable-alsa \
+    # --disable-alsa \
     --disable-debug \
     --disable-doc \
     # --enable-shared \
@@ -107,36 +104,31 @@ RUN mkdir -p /dist && cd /dist && \
 
 # node.js
 RUN mkdir -p /dist && cd /dist \
-    && curl -OL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
-    && tar -xvJ -f "node-v${NODE_VERSION}-linux-x64.tar.xz" \
-    && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
-    && cd node-v${NODE_VERSION}-linux-x64 \
-    && cp -R bin /usr/local \
-    && cp -R lib /usr/local
+&& curl -OL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+&& tar -xvJ -f "node-v${NODE_VERSION}-linux-x64.tar.xz" \
+&& rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
+&& cd node-v${NODE_VERSION}-linux-x64 \
+&& cp -R bin /usr/local \
+&& cp -R lib /usr/local
 
-RUN apt-get install --no-install-recommends --no-install-suggests -y \
-    # ca-certificates \
-    procps \
-    # libpcre3 \
-    openssl \
-    libssl1.1
-    # v4l-utils \
-    # libv4l-0
+RUN apt-get --no-install-recommends --no-install-suggests -y install \
+procps \
+# libpcre3 \
+openssl \
+libssl1.1
+# v4l-utils \
+# libv4l-0
 
 COPY . /restreamer
 
 RUN cd /restreamer \
-    && npm install -g grunt-cli \
-    && npm install \
-    && grunt build \
-    && npm uninstall -g grunt-cli \
-    && npm prune --omit=dev \
-    && npm cache verify
-    # && apt-get remove -y \
-    # curl \
-    # && apt autoremove -y \
-    # && rm -rf /var/lib/apt/lists/*
-    # && npm install --omit=dev \
+&& npm install -g grunt-cli \
+&& npm install \
+&& grunt build \
+&& npm uninstall -g grunt-cli \
+&& npm prune --omit=dev \
+&& npm cache verify
+# && npm install --omit=dev \
 
 FROM ${IMAGE}
 COPY --from=builder /usr/local/ /usr/local/
@@ -163,4 +155,5 @@ EXPOSE 8080 8181
 
 # VOLUME ["/restreamer/db"]
 
-CMD ["./run.sh"]
+# CMD ["./run.sh"]
+ENTRYPOINT [ "node", "./src/start.js" ]
