@@ -54,7 +54,9 @@ if (env.hasErrors()) {
 RestreamerData.checkJSONDb()
     .then(() => {
         Restreamer.checkForUpdates();
-        Restreamer.getPublicIp();
+        import('public-ip').then(publicIp => {
+            Restreamer.getPublicIp(publicIp.publicIpv4);
+        })
         Restreamer.bindWebsocketEvents();
         return restreamerApp.startWebserver();
     })
