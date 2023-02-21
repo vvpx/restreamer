@@ -132,7 +132,7 @@
             "video": {
                  "outputOptions": [
                     "-map_metadata -1",
-                    "-metadata application=datarhei/Restreamer"
+                    "-metadata application=vvp/Restreamer"
                 ]
             },
             "rtmp": {
@@ -171,7 +171,7 @@
             },
             "rtsp": {
                 "inputOptions": [
-                    "-stimeout 5000000"
+                    "-stimeout 10000000"
                 ]
             },
             "rtsp-tcp": {
@@ -189,7 +189,7 @@
             "timeout": "30000"
         },
         "monitor": {
-            "restart_wait": "8000",
+            "restart_wait": "10000",
             "stale_wait": "60000"
         }
     },
@@ -248,7 +248,7 @@
                 "TIMEZONE"
             ],
             "type": "string",
-            "defaultValue": "Europe/Berlin",
+            "defaultValue": "Asia/Novokuznetsk",
             "required": false,
             "description": "Set the timezone. Accepts Olson timezone IDs."
         },
