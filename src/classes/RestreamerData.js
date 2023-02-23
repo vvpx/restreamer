@@ -7,13 +7,14 @@
 
 'use strict';
 
+const path = require('path');
 const fs = require('fs');
 const fsp = require('fs/promises');
-const path = require('path');
 const Validator = require('jsonschema').Validator;
 
 const logger = require('./Logger')('RestreamerData');
 
+global.__base = global.__base ?? path.join(__dirname, '..', '..');
 const dbPath = path.join(global.__base, 'db');
 const dbFile = 'v1.json';
 
@@ -23,10 +24,10 @@ const schemaFile = 'jsondb_v1_schema.json';
 /**
 * Update the defaults according to RS_AUDIO
 */
-function setDbAudio (dbdata) {
+function setDbAudio(dbdata) {
     var audioNode = dbdata.options.audio;
 
-    switch(process.env.RS_AUDIO) {
+    switch (process.env.RS_AUDIO) {
         case 'auto':
             audioNode.codec = 'auto';
             break;
@@ -61,11 +62,11 @@ function setDbAudio (dbdata) {
 
 class RestreamerData {
 
-    static checkJSONDb () {
+    static checkJSONDb() {
         return new Promise(this.__checkJSONDb);
     }
 
-    static __checkJSONDb (resolve, _reject) {
+    static __checkJSONDb(resolve, _reject) {
         var schemadata = {};
         var dbdata = {};
 
@@ -88,11 +89,8 @@ class RestreamerData {
                     logger.debug(`Validation error of v1.db: ${JSON.stringify(validateResult.errors)}`);
                     throw new Error(JSON.stringify(validateResult.errors));
                 } else {
-                    logger.debug('"v1.db" is valid');
-                    logger.info('"v1.db" is valid');
-
                     // Fill up optional fields if not present
-                    if(!('video' in dbdata.options)) {
+                    if (!('video' in dbdata.options)) {
                         dbdata.options.video = {
                             codec: 'copy',
                             preset: 'ultrafast',
@@ -103,7 +101,7 @@ class RestreamerData {
                         };
                     }
 
-                    if(!('audio' in dbdata.options)) {
+                    if (!('audio' in dbdata.options)) {
                         dbdata.options.audio = {
                             codec: 'auto',
                             preset: 'silence',
@@ -115,7 +113,7 @@ class RestreamerData {
                         setDbAudio(dbdata);
                     }
 
-                    if(!('player' in dbdata.options)) {
+                    if (!('player' in dbdata.options)) {
                         dbdata.options.player = {
                             autoplay: true,
                             mute: true,
@@ -129,7 +127,7 @@ class RestreamerData {
                         };
                     }
 
-                    if(!('output' in dbdata.options)) {
+                    if (!('output' in dbdata.options)) {
                         dbdata.options.output = {
                             type: 'rtmp',
                             rtmp: {},
@@ -142,7 +140,7 @@ class RestreamerData {
                         };
                     }
 
-                    if(parseInt(dbdata.options.output.hls.timeout) > 2147) {
+                    if (parseInt(dbdata.options.output.hls.timeout) > 2147) {
                         dbdata.options.output.hls.timeout = '10';
                     }
 
@@ -152,6 +150,7 @@ class RestreamerData {
                 }
             })
             .catch((error) => {
+                logger.debug(`Error reading "v1.db": ${error.toString()}`);
                 logger.info('create new "v1.db"');
 
                 var defaultStructure = {
@@ -214,29 +213,31 @@ class RestreamerData {
 
                 // Update the defaults according to RS_AUDIO
                 setDbAudio(defaultStructure);
-            
+
                 // Set stream source and start streaming on a fresh installation
-                if(process.env.RS_INPUTSTREAM != '') {
+                if (process.env.RS_INPUTSTREAM != '') {
                     defaultStructure.addresses.srcAddress = process.env.RS_INPUTSTREAM;
                     defaultStructure.states.repeatToLocalNginx.type = 'connected';
                     defaultStructure.userActions.repeatToLocalNginx = 'start';
 
                     // Set stream destination and start streaming on a fresh installation
-                    if(process.env.RS_OUTPUTSTREAM != '') {
+                    if (process.env.RS_OUTPUTSTREAM != '') {
                         defaultStructure.addresses.optionalOutputAddress = process.env.RS_OUTPUTSTREAM;
                         defaultStructure.states.repeatToOptionalOutput.type = 'connected';
                         defaultStructure.userActions.repeatToOptionalOutput = 'start';
                     }
                 }
 
-
-                logger.debug(`Error reading "v1.db": ${error.toString()}`);
-
                 if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
                 fs.writeFileSync(path.join(dbPath, dbFile), JSON.stringify(defaultStructure));
                 resolve();
             });
     }
+}
+
+if (require.main === module) {
+    RestreamerData.checkJSONDb()
+        .then(() => process.exit(0))
 }
 
 module.exports = RestreamerData;
