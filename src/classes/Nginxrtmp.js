@@ -8,27 +8,37 @@
  */
 'use strict';
 
-//const Q = require('q');
-const config = require('../../conf/live.json');
+
 //const proc = require('process');
 const spawn = require('child_process').spawn;
-const logger = require('./Logger')('NGINX');
+const _logger = require('./Logger');
 //const rp = require('request-promise');
 const http = require('http');
+const timeout = 256;
 
+/**
+ * @param {string} url
+ * @param {(arg0: boolean) => void} cb
+ */
+function isRunning(url, cb) {
+    http.get(url, res => cb(res.statusCode === 200))
+        .on('error', () => cb(false))
+}
 
 /**
  * Class to watch and control the NGINX RTMP server process
  */
 class Nginxrtmp {
+    logger;
+    config;
 
     /**
      * Constructs the NGINX rtmp with injection of config to use
      * @param config
      */
     constructor(config) {
-        this.config = config;
-        this.logger = logger;
+        this.logger = _logger('NGINX');
+        this.config = config.nginx;
 
         this.process = null;        // Process handler
         this.allowRestart = false;  // Whether to allow restarts. Restarts are not allowed until the first successful start
@@ -41,15 +51,15 @@ class Nginxrtmp {
      */
     async start(useSSL) {
         this.logger.info('Starting ...');
-        let timeout = 256;
+        let running = false;
         let abort = false;
 
         if (useSSL == false) {
-            this.process = spawn(this.config.nginx.command, this.config.nginx.args);
+            this.process = spawn(this.config.command, this.config.args);
         }
         else {
             this.logger.info('Enabling HTTPS');
-            this.process = spawn(this.config.nginx.command, this.config.nginx.args_ssl);
+            this.process = spawn(this.config.command, this.config.args_ssl);
         }
 
         this.process.stdout.on('data', (data) => {
@@ -83,7 +93,7 @@ class Nginxrtmp {
 
             this.logger.error('Exited with code: ' + code);
 
-            if (code < 0) {
+            if ((code === null) || (code < 0)) {
                 return;
             }
 
@@ -92,7 +102,7 @@ class Nginxrtmp {
                 setTimeout(() => {
                     self.logger.info('Trying to restart ...');
                     self.start(useSSL);
-                }, timeout);
+                }, 4 * timeout);
             }
         });
 
@@ -100,11 +110,12 @@ class Nginxrtmp {
             this.logger.error('Failed to spawn process: ' + err.name + ': ' + err.message);
         });
 
-        let running = false;
-        let pz = new Promise(resolve => setTimeout(resolve, timeout));
-        while (!abort && !(running = await pz.then(this.isRunning))) logger.info(`isRunning: ${running}`);
+        const ping_url = "http://" + this.config.streaming.ip + ":" + this.config.streaming.http_port + this.config.streaming.http_health_path;
+        const foo = () => new Promise(r => setTimeout(isRunning, timeout, ping_url, r));
 
-        if (running == false) {
+        while (!abort && !(running = await foo())) this.logger.info(`isRunning: ${running}`);
+
+        if (running === false) {
             this.process = null;
             throw new Error('Failed to start');
         }
@@ -115,34 +126,6 @@ class Nginxrtmp {
 
         return true;
     }
-
-    /**
-     * Get current state of the NGINX server
-     * @returns {Promise.<boolean>}
-     */
-    isRunning() {
-        const url = "http://" + config.nginx.streaming.ip + ":" + config.nginx.streaming.http_port + config.nginx.streaming.http_health_path;
-        return new Promise(resolve => 
-            http.get(url, res => resolve(res.statusCode == 200))
-            .on('error', () => resolve(false))
-        )
-    }
-
-    // /**
-    //  * Get current state of the NGINX server
-    //  * @returns {Promise.<boolean>}
-    //  */
-    // async isRunning(delay) {
-    //     const url = "http://" + config.nginx.streaming.ip + ":" +  config.nginx.streaming.http_port  +  config.nginx.streaming.http_health_path;
-
-    //     try {
-    //         await Q.delay(delay); // delay the state detection by the given amount of milliseconds
-    //         const response = await rp(url);
-    //         return (response == 'pong');
-    //     } catch(error) {
-    //         return false;
-    //     }
-    // }
 }
 
 module.exports = (config) => {
