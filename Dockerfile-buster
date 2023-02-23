@@ -59,6 +59,7 @@ RUN mkdir -p /dist && cd /dist \
 # COPY ./contrib/ffmpeg /dist/restreamer/contrib/ffmpeg
 # patch -p1 < /dist/restreamer/contrib/ffmpeg/bitrate.patch && \
 
+# ARG FFMPEG_VERSION=5.1.2
 RUN mkdir -p /dist && cd /dist && \
     curl -OL "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
     tar -xvz -f ffmpeg-${FFMPEG_VERSION}.tar.gz && \
@@ -75,7 +76,7 @@ RUN mkdir -p /dist && cd /dist && \
     --enable-libx264 \
     --enable-openssl \
     --enable-postproc \
-    # --enable-small \
+    --enable-small \
     # --enable-static \
     # --disable-static \
     # --disable-encoders \
@@ -88,21 +89,22 @@ RUN mkdir -p /dist && cd /dist && \
     && rm /usr/local/lib/*.a
 
 # nginx-rtmp
-RUN mkdir -p /dist && cd /dist && \
-    curl -OL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" && \
-    tar -xvz -f "nginx-${NGINX_VERSION}.tar.gz" && \
-    curl -OL "https://github.com/arut/nginx-rtmp-module/archive/v${NGINXRTMP_VERSION}.tar.gz" && \
-    tar -xvz -f "v${NGINXRTMP_VERSION}.tar.gz" && \
-    sed -i"" -e '/case ESCAPE:/i /* fall through */' nginx-rtmp-module-${NGINXRTMP_VERSION}/ngx_rtmp_eval.c && \
-    cd nginx-${NGINX_VERSION} && \
-    ./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_v2_module --add-module=/dist/nginx-rtmp-module-${NGINXRTMP_VERSION} \
-    --without-pcre2 \
-    # --with-cc-opt="-I /usr/include" \
-    # --with-ld-opt="-L /usr/lib/x86_64-linux-gnu" \
-    && make -j$(nproc) \
-    && make install
+RUN mkdir -p /dist && cd /dist \
+&& curl -OL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" \
+&& tar -xvz -f "nginx-${NGINX_VERSION}.tar.gz" \
+&& curl -OL "https://github.com/arut/nginx-rtmp-module/archive/v${NGINXRTMP_VERSION}.tar.gz" \
+&& tar -xvz -f "v${NGINXRTMP_VERSION}.tar.gz" \
+&& sed -i"" -e '/case ESCAPE:/i /* fall through */' nginx-rtmp-module-${NGINXRTMP_VERSION}/ngx_rtmp_eval.c \
+&& cd nginx-${NGINX_VERSION} \
+&& ./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_v2_module --add-module=/dist/nginx-rtmp-module-${NGINXRTMP_VERSION} \
+--without-pcre2 \
+# --with-cc-opt="-I /usr/include" \
+# --with-ld-opt="-L /usr/lib/x86_64-linux-gnu" \
+&& make -j$(nproc) \
+&& make install
 
 # node.js
+# ARG NODE_VERSION=17.9.1
 RUN mkdir -p /dist && cd /dist \
 && curl -OL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
 && tar -xvJ -f "node-v${NODE_VERSION}-linux-x64.tar.xz" \
@@ -111,23 +113,24 @@ RUN mkdir -p /dist && cd /dist \
 && cp -R bin /usr/local \
 && cp -R lib /usr/local
 
-RUN apt-get --no-install-recommends --no-install-suggests -y install \
-procps \
-# libpcre3 \
-openssl \
-libssl1.1
-# v4l-utils \
-# libv4l-0
+# RUN apt-get --no-install-recommends --no-install-suggests -y install \
+# procps \
+# # v4l-utils \
+# # libv4l-0
 
 COPY . /restreamer
 
 RUN cd /restreamer \
+&& npm config set update-notifier false \
+# && npm update -g npm \
 && npm install -g grunt-cli \
 && npm install \
 && grunt build \
 && npm uninstall -g grunt-cli \
 && npm prune --omit=dev \
-&& npm cache verify
+# && npm cache verify \
+&& npm cache clean --force \
+&& rm -rf /usr/local/lib/node_modules/npm
 # && npm install --omit=dev \
 
 FROM ${IMAGE}
