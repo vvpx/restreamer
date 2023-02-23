@@ -15,6 +15,8 @@ const LEVEL_ERROR = 1;
 const LEVEL_WARN = 2;
 const LEVEL_INFO = 3;
 const LEVEL_DEBUG = 4;
+process.env.RS_LOGLEVEL = process.env.RS_LOGLEVEL || LEVEL_INFO;
+const muted = process.env.RS_LOGLEVEL === LEVEL_MUTE;
 
 /**
  * Class for logger
@@ -26,7 +28,7 @@ class Logger {
      * @returns {boolean}
      */
     static isMuted () {
-        return process.env.RS_LOGLEVEL === LEVEL_MUTE;
+        return muted;
     }
 
     /**
@@ -34,7 +36,6 @@ class Logger {
      * @param {string} context context of the log message (classname.methodname)
      */
     constructor (context) {
-        process.env.RS_LOGLEVEL = process.env.RS_LOGLEVEL || LEVEL_INFO;
         this.context = context;
 
         this.debuglog = null;
