@@ -20,10 +20,10 @@ env.init(config);
 const packageJson = require(path.join('..', 'package.json'));
 const logger = require('./classes/Logger')('start');
 const nginxrtmp = require('./classes/Nginxrtmp')(config);
-//const Q = require('q');
-const Restreamer = require('./classes/Restreamer');
-const RestreamerData = require('./classes/RestreamerData');
 const restreamerApp = require('./webserver/app');
+const Restreamer = require('./classes/Restreamer');
+// const RestreamerData = require('./classes/RestreamerData');
+
 
 if (process.env.RS_DEBUG == "true") {
     logger.info('Debugging enabled. Check the /debug path in the web interface.', false);
@@ -51,21 +51,18 @@ if (env.hasErrors()) {
 }
 
 // start the app
-RestreamerData.checkJSONDb()
-    .then(() => {
-        Restreamer.checkForUpdates();
-        import('public-ip').then(publicIp => {
-            Restreamer.getPublicIp(publicIp.publicIpv4);
-        })
-        Restreamer.bindWebsocketEvents();
-        return restreamerApp.startWebserver();
-    })
-    .then(() => {
-        return nginxrtmp.start(process.env.RS_HTTPS == "true");
-    })
-    .then(() => {
-        Restreamer.restoreProcesses();
-    })
-    .catch(error => {
-        logger.error('Error starting webserver and nginx for application: ' + error);
+// RestreamerData.checkJSONDb()
+require('child_process').fork('./src/classes/RestreamerData.js')
+    .on('exit', () => {
+        restreamerApp.startWebserver()
+            .then(() => {
+                Restreamer.bindWebsocketEvents();
+                return nginxrtmp.start(process.env.RS_HTTPS == "true");
+            })
+            .then(() => {
+                Restreamer.restoreProcesses();
+            })
+            .catch(error => {
+                logger.error('Error starting webserver and nginx for application: ' + error);
+            })
     });
