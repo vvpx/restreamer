@@ -1,6 +1,6 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
+const EventEmitter = require('node:events').EventEmitter;
 
 /**
  * Replace Q.deferred object
@@ -20,7 +20,12 @@ class Qdefer {
     /**
      * @param {boolean} bResolve - promise resolution
      */
-    #resolution(bResolve, value) { this.#__event.emit('q', [bResolve, value]) };
+     #resolution(bResolve, value) {
+        if (this.#__event) {
+            this.#__event.emit('q', [bResolve, value]);
+            this.#__event = null;
+        }
+    }
 
     reject(reason) { this.#resolution(false, reason); }
 
