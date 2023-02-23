@@ -13,7 +13,8 @@ const logger = require('./Logger')('Restreamer');
 const WebsocketsController = require('./WebsocketsController');
 const FfmpegCommand = require('fluent-ffmpeg');
 const Q = require('../classes/MyQ.js');
-const JsonDB = require('node-json-db');
+const {JsonDB, Config} = require('node-json-db');
+const db = new JsonDB(new Config(config.jsondb, true, false));
 // const publicIp = require('public-ip');
 
 const execFile = require('child_process').execFile;
@@ -214,13 +215,12 @@ class Restreamer {
      * restore the ffmpeg processes from jsondb (called on app start to restore ffmpeg processes
      * after the application has been killed or stuff
      */
-    static restoreProcesses() {
-        var db = new JsonDB(config.jsondb, true, false);
-
-        Restreamer.data.addresses = db.getData('/addresses');
-        Restreamer.data.states = db.getData('/states');
-        Restreamer.data.options = db.getData('/options');
-        Restreamer.data.userActions = db.getData('/userActions');
+    static async restoreProcesses() {
+        // let db = new JsonDB(new Config(config.jsondb, true, false));
+        Restreamer.data.addresses = await db.getData('/addresses');
+        Restreamer.data.states = await db.getData('/states');
+        Restreamer.data.options = await db.getData('/options');
+        Restreamer.data.userActions = await db.getData('/userActions');
 
         Restreamer.writeToPlayerConfig();
 
@@ -259,7 +259,7 @@ class Restreamer {
      * write JSON file for persistence
      */
     static writeToDB() {
-        var db = new JsonDB(config.jsondb, true, false);
+        // let db = new JsonDB(new Config(config.jsondb, true, false));
         db.push('/', Restreamer.dataForJsonDb());
     }
 
@@ -630,7 +630,6 @@ class Restreamer {
 
         Restreamer.writeToDB();
         Restreamer.updateStreamDataOnGui();
-
         return action;
     }
 
@@ -816,7 +815,6 @@ class Restreamer {
                     }
 
                     logger.info(streamType + ': ended normally');
-
                     retry();
                 })
 
@@ -837,7 +835,6 @@ class Restreamer {
                     }
 
                     Restreamer.updateState(streamType, 'error', error.toString());
-
                     retry();
                 })
 
@@ -877,7 +874,6 @@ class Restreamer {
             }
 
             Restreamer.updateState(streamType, 'error', error.toString());
-
             retry();
         });
     }
@@ -1007,16 +1003,17 @@ class Restreamer {
     /**
      * get public ip
      */
-    static getPublicIp(publicIp) {
+    static getPublicIp() {
         logger.info('Retrieving public IP ...', 'publicIP');
+        Restreamer.data.publicIp = '127.0.0.1';
 
-        publicIp().then(ip => {
-            Restreamer.data.publicIp = ip;
-            logger.info('Found public IP: ' + ip, 'publicIP');
-        }).catch(err => {
-            logger.warn('Failed to get public IP', 'publicIP');
-            Restreamer.data.publicIp = '127.0.0.1';
-        });
+        // publicIp().then(ip => {
+        //     Restreamer.data.publicIp = ip;
+        //     logger.info('Found public IP: ' + ip, 'publicIP');
+        // }).catch(err => {
+        //     logger.warn('Failed to get public IP', 'publicIP');
+        //     Restreamer.data.publicIp = '127.0.0.1';
+        // });
     }
 }
 
