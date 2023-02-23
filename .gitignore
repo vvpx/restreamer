@@ -70,3 +70,5 @@ db/**
 heapdump
 Gemfile.lock
 _site/**
+
+dummy

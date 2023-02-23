@@ -1,5 +1,5 @@
-ARG IMAGE=amd64/debian:bullseye-slim
-#ARG IMAGE=amd64/debian:10.4-slim
+ARG IMAGE=amd64/debian:buster-slim
+#ARG IMAGE=amd64/debian:bullseye-slim
 
 FROM $IMAGE as builder
 
@@ -109,7 +109,7 @@ COPY --from=builder /usr/local/nginx /usr/local/nginx
 COPY --from=builder /usr/local/lib /usr/local/lib
 
 RUN apt-get update && \
-    apt-get install -y \
+    apt-get install --no-install-recommends --no-install-suggests -y \
     ca-certificates \
     git \
     procps \
@@ -135,7 +135,7 @@ RUN cd /restreamer && \
     apt-get remove -y \
     git \
     curl && \
-    apt autoremove -y
+    apt autoremove -y && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8080 8181
 
