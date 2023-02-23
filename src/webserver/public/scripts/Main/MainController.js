@@ -24,7 +24,7 @@ window.angular.module('Main').controller('mainController',
         };
 
         const initClappr = () => {
-            const plugins = [];
+            const plugins = [HlsjsPlayback];
             if($scope.reStreamerData.options.player.statistics == true) {
                 plugins.push(ClapprNerdStats);
                 plugins.push(ClapprStats);
