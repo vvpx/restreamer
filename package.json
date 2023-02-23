@@ -12,7 +12,6 @@
     "start": "node ./src/start"
   },
   "dependencies": {
-    "compression": "^1.7.3",
     "cookie": "0.4.1",
     "cookie-parser": "1.4.3",
     "core-js": "3.26.1",
@@ -21,17 +20,14 @@
     "fluent-ffmpeg": "^2.1.2",
     "jsonschema": "1.2.0",
     "moment-timezone": "0.5.40",
-    "node-json-db": "0.8.1",
+    "node-json-db": "^2.1.4",
     "printf": "^0.6.1",
-    "public-ip": "6.0.1",
     "socket.io": "^4.0.0"
   },
   "devDependencies": {
-    "@types/public-ip": "^3.1.0",
-    "babel-core": "6.26.3",
+    "babel-core": "^6.26.3",
     "babel-loader": "8.2.2",
     "babel-preset-env": "^1.7.0",
-    "coffeescript": "^2.3.2",
     "eslint": "^8.1.0",
     "grunt": "^1.4.0",
     "grunt-babel": "7.0.0",
@@ -39,9 +35,8 @@
     "grunt-contrib-cssmin": "2.2.1",
     "grunt-contrib-uglify": "^5.0.0",
     "grunt-contrib-watch": "^1.1.0",
-    "grunt-ng-annotate": "4.0.0",
+    "grunt-ng-annotate-patched": "^3.0.2",
     "grunt-shell": "2.1.0",
-    "load-grunt-tasks": "3.5.2",
-    "webpack": "^5.52.1"
+    "load-grunt-tasks": "3.5.2"
   }
 }
