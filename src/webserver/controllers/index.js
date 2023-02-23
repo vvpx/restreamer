@@ -7,7 +7,7 @@
 /* eslint no-unused-vars: 0 */
 'use strict';
 
-const path = require('path');
+//const path = require('path');
 var auth = require(require('path').join(global.__base, 'conf', 'live.json')).auth;
 
 module.exports = (app) => {
@@ -30,13 +30,16 @@ module.exports = (app) => {
             'message': message
         });
     });
+    
     app.get('/authenticated', (req, res) => {
         res.json(req.session.authenticated === true);
     });
+
     app.get('/logout', (req, res) => {
         req.session.destroy();
         res.end();
     });
+
     /* Handle NGINX-RTMP token */
     app.get('/token', (req, res) => {
         var token = process.env.RS_TOKEN || auth.token;
@@ -60,6 +63,3 @@ module.exports = (app) => {
         }
     });
 };
-
-
-
