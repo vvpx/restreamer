@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const logger = require.main.require('./classes/Logger')('WSController');
+// const logger = require.main.require('./classes/Logger')('WSController');
 const app = require.main.require('./webserver/app').app;
 
 /**
@@ -20,23 +20,29 @@ class WebsocketsController {
      * @param {string} event name of the event
      * @param {object} data data to emit to the client event listener
      */
-    static emit (event, data) {
-        app.get('websocketsReady').promise.then((io) => {
-            logger.debug('Emitting ' + event);
-            io.sockets.emit(event, data);
-        });
+    static emit(event, data) {
+        // app.get('websocketsReady').promise.then((io) => {
+        //     // logger.debug('Emitting ' + event);
+        //     io.sockets.emit(event, data);
+        // });
+        app.get('io').sockets.emit(event, data);
     }
 
     /**
      * add callback on WS connection
      * @param {function} callback
      */
-    static setConnectCallback (callback) {
-        app.get('websocketsReady').promise.then((io) => {
-            io.on('connection', (socket) => {
+    static setConnectCallback(callback) {
+        // app.get('websocketsReady').promise.then((io) => {
+        //     io.on('connection', (socket) => {
+        //         callback(socket);
+        //     });
+        // });
+
+        app.get('io')
+            .on('connection', (socket) => {
                 callback(socket);
             });
-        });
     }
 }
 
