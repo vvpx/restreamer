@@ -11,11 +11,13 @@ const session = require("express-session");
 const cookie = require("cookie");
 const cookieParser = require("cookie-parser");
 // const bodyParser = require("body-parser");
-const compression = require("compression");
+// const compression = require("compression");
 
 // other
 const path = require("path");
-const Q = require('../classes/MyQ.js');
+// const Q = require('../classes/MyQ.js');
+//import * as Q from "../classes/MyQ.mjs"
+
 const crypto = require("crypto");
 
 // modules
@@ -28,6 +30,7 @@ const expressLogger = require("./middleware/expressLogger");
 
 // socket.io
 const { Server } = require("socket.io");
+// const { resolve } = require("path");
 
 /**
  * Class for the ReStreamer webserver, powered by express.js
@@ -77,7 +80,7 @@ class RestreamerExpressApp {
      * add content compression on responses
      */
     addCompression() {
-        this.app.use(compression());
+        // this.app.use(compression());
     }
 
     /**
@@ -98,7 +101,7 @@ class RestreamerExpressApp {
      * create a promise to check when websockets are ready for bindings
      */
     createPromiseForWebsockets() {
-        this.app.set("websocketsReady", Q.defer());
+        // this.app.set("websocketsReady", Q.defer());
     }
 
     /**
@@ -143,7 +146,7 @@ class RestreamerExpressApp {
                 this.sessionStore.get(
                     cookieParser.signedCookie(
                         cookie.parse(handshakeData.headers.cookie)[
-                            this.sessionKey
+                        this.sessionKey
                         ],
                         this.secretKey
                     ),
@@ -172,23 +175,21 @@ class RestreamerExpressApp {
      * @returns {*|promise}
      */
     startWebserver() {
-        var deferred = Q.defer();
-        var server = null;
+        return new Promise(resolve => {
+            let server = null;
+            logger.info("Starting ...");
+            this.app.set("port", process.env.RS_NODEJS_PORT);
+            server = this.app.listen(this.app.get("port"), () => {
+                this.app.set("io", new Server(server, { path: "/socket.io" }));
+                this.secureSockets();
+                this.app.set("server", server.address());
 
-        logger.info("Starting ...");
-        this.app.set("port", process.env.RS_NODEJS_PORT);
-        server = this.app.listen(this.app.get("port"), () => {
-            this.app.set("io", new Server(server, { path: "/socket.io" }));
-            this.secureSockets();
-            this.app.set("server", server.address());
-
-            // promise to avoid ws binding before the webserver has been started
-            this.app.get("websocketsReady").resolve(this.app.get("io"));
-            logger.info("Running on port " + process.env.RS_NODEJS_PORT);
-            deferred.resolve(server.address().port);
+                // promise to avoid ws binding before the webserver has been started
+                // this.app.get("websocketsReady").resolve(this.app.get("io"));
+                logger.info("Running on port " + process.env.RS_NODEJS_PORT);
+                resolve()
+            });
         });
-
-        return deferred.promise;
     }
 
     /**
@@ -232,5 +233,4 @@ class RestreamerExpressApp {
 }
 
 const restreamerApp = new RestreamerExpressApp();
-
 module.exports = restreamerApp;
