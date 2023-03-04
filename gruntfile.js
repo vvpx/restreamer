@@ -1,7 +1,6 @@
 'use strict';
 
-// path to store the transpiled es6 files
-const transpiledPath = "src/webserver/transpiled/";
+const transpiledPath = "transpiled";
 
 const files = {
     //workaround to keep correct order
@@ -33,7 +32,7 @@ const files = {
     es6Src: [
         'webserver/public/scripts/**/*.js'
     ],
-    stylesheets: ['src/webserver/public/css/*.css']
+    stylesheets: ['src/webserver/public/css/*.css', '!src/webserver/public/css/restreamer.min.css']
 };
 
 module.exports = function (grunt) {
