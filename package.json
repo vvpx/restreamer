@@ -14,7 +14,6 @@
   "dependencies": {
     "cookie": "0.4.1",
     "cookie-parser": "1.4.3",
-    "core-js": "3.26.1",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
     "fluent-ffmpeg": "^2.1.2",
@@ -25,18 +24,19 @@
     "socket.io": "^4.0.0"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "8.2.2",
-    "babel-preset-env": "^1.7.0",
+    "@babel/cli": "^7.21.0",
+    "@babel/core": "^7.21.0",
+    "@babel/preset-env": "^7.20.2",
+    "babel-plugin-angularjs-annotate": "^0.10.0",
     "eslint": "^8.1.0",
     "grunt": "^1.4.0",
-    "grunt-babel": "7.0.0",
+    "grunt-babel": "8.0.0",
+    "grunt-contrib-concat": "^2.1.0",
     "grunt-contrib-csslint": "2.0.0",
-    "grunt-contrib-cssmin": "2.2.1",
+    "grunt-contrib-cssmin": "3.0.0",
     "grunt-contrib-uglify": "^5.0.0",
     "grunt-contrib-watch": "^1.1.0",
-    "grunt-ng-annotate-patched": "^3.0.2",
-    "grunt-shell": "2.1.0",
-    "load-grunt-tasks": "3.5.2"
+    "grunt-shell": "4.0.0",
+    "load-grunt-tasks": "5.1.0"
   }
 }
