@@ -26,7 +26,7 @@ const indexRouter = require("./controllers/index");
 const apiV1 = require("./controllers/api/v1");
 
 // middleware
-const expressLogger = require("./middleware/expressLogger");
+// const expressLogger = require("./middleware/expressLogger");
 
 // socket.io
 const { Server } = require("socket.io");
@@ -87,7 +87,7 @@ class RestreamerExpressApp {
      * add express logger
      */
     addExpressLogger() {
-        this.app.use("/", expressLogger);
+        // this.app.use("/", expressLogger);
     }
 
     /**
@@ -214,8 +214,9 @@ class RestreamerExpressApp {
         this.app.get("/", (_req, res) => {
             res.sendFile(path.join(global.__public, "index.prod.html"));
         });
-        this.add404ErrorHandling();
-        this.add500ErrorHandling();
+        // Internal error handling exist in express
+        // this.add404ErrorHandling();
+        // this.add500ErrorHandling();
     }
 
     /**
@@ -227,8 +228,8 @@ class RestreamerExpressApp {
         this.app.get("/", (req, res) => {
             res.sendFile(path.join(global.__public, "index.dev.html"));
         });
-        this.add404ErrorHandling();
-        this.add500ErrorHandling();
+        // this.add404ErrorHandling();
+        // this.add500ErrorHandling();
     }
 }
 

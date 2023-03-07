@@ -6,20 +6,19 @@
  */
 'use strict';
 
-const path = require('path');
 const fs = require('fs');
-const config = require(path.join(global.__base, 'conf', 'live.json'));
+const path = require('path');
+const FfmpegCommand = require('fluent-ffmpeg');
+const {JsonDB, Config} = require('node-json-db');
+const execFile = require('child_process').execFile;
+//const https = require('https');
+
+const Q = require('./MyQ.js');
 const logger = require('./Logger')('Restreamer');
 const WebsocketsController = require('./WebsocketsController');
-const FfmpegCommand = require('fluent-ffmpeg');
-const Q = require('../classes/MyQ.js');
-const {JsonDB, Config} = require('node-json-db');
+const {config} = require.main.exports;
 const db = new JsonDB(new Config(config.jsondb, true, false));
-// const publicIp = require('public-ip');
 
-const execFile = require('child_process').execFile;
-//const packageJson = require(path.join(global.__base, 'package.json'));
-//const https = require('https');
 
 /**
  * class Restreamer creates and manages streams through ffmpeg

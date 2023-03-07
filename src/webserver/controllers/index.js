@@ -7,8 +7,7 @@
 /* eslint no-unused-vars: 0 */
 'use strict';
 
-//const path = require('path');
-var auth = require(require('path').join(global.__base, 'conf', 'live.json')).auth;
+const auth = require.main.exports.config.auth;
 
 module.exports = (app) => {
     /* Handle Login POST */

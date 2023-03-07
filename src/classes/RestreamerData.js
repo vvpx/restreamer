@@ -81,9 +81,8 @@ class RestreamerData {
             .then((d) => {
                 dbdata = JSON.parse(d.toString('utf8'));
                 let v = new Validator();
-                let instance = dbdata;
                 let schema = schemadata;
-                let validateResult = v.validate(instance, schema);
+                let validateResult = v.validate(dbdata, schema);
 
                 if (validateResult.errors.length > 0) {
                     logger.debug(`Validation error of v1.db: ${JSON.stringify(validateResult.errors)}`);
