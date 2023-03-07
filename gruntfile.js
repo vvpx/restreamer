@@ -64,7 +64,8 @@ module.exports = function (grunt) {
         babel: {
             options: {
                 sourceMap: true,
-                presets: ['env']
+                presets: ['@babel/preset-env'],
+                plugins: ['angularjs-annotate']
             },
             all: {
                 files: [
@@ -75,6 +76,16 @@ module.exports = function (grunt) {
                         dest: transpiledPath
                     }
                 ]
+            }
+        },
+
+        concat: {
+            options: {
+                sourceMap: true
+            },
+            js: {
+                src: ['<%= transpiledFrontendJs %>'],
+                dest: 'src/webserver/public/dist/application.js'
             }
         },
 
@@ -106,7 +117,8 @@ module.exports = function (grunt) {
         uglify: {
             production: {
                 options: {
-                    mangle: true
+                    mangle: true,
+                    sourceMap: true
                 },
                 files: {
                     'src/webserver/public/dist/application.min.js': 'src/webserver/public/dist/application.js'
@@ -127,7 +139,6 @@ module.exports = function (grunt) {
 
         /*
          produces one file from all fontend javascript bewaring DI naming of angular
-         */
         ngAnnotate: {
             production: {
                 files: {
@@ -135,6 +146,7 @@ module.exports = function (grunt) {
                 }
             }
         }
+        */
     });
 
     /*
@@ -147,6 +159,7 @@ module.exports = function (grunt) {
         grunt.config.set('stylesheets', files.stylesheets);
     });
     grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks('grunt-babel');
     grunt.loadNpmTasks('grunt-contrib-watch');
 
     /*
@@ -157,7 +170,7 @@ module.exports = function (grunt) {
     // clear old transpile folder and create new one
     grunt.registerTask('clearOldBuild', ['shell:removeTempTranspilingFolder', 'shell:createTempTranspilingFolder']);
     // minify the frontend files
-    grunt.registerTask('minifyFrontendFiles', ['cssmin', 'ngAnnotate', 'uglify']);
+    grunt.registerTask('minifyFrontendFiles', ['cssmin', 'concat', 'uglify']);
 
     /*
      Build Tasks
