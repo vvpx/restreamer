@@ -5,19 +5,22 @@
  * @license Apache-2.0
  */
 'use strict';
+
 const path = require('path');
 
 global.__src = __dirname;
 global.__base = path.join(__dirname, '..');
-global.__public = path.join(__dirname, 'webserver', 'public');
+global.__public = path.join(__dirname, 'webserver/public');
 
-const config = require(path.join(global.__base, 'conf', 'live.json'));
+const config = require('../conf/live.json');
+module.exports.config = config;
+
 const env = require('./classes/EnvVar');
 
 // setup environment vars
 env.init(config);
 
-const packageJson = require(path.join('..', 'package.json'));
+const packageJson = require('../package.json');
 const logger = require('./classes/Logger')('start');
 const nginxrtmp = require('./classes/Nginxrtmp')(config);
 const restreamerApp = require('./webserver/app');
@@ -66,3 +69,4 @@ require('child_process').fork('./src/classes/RestreamerData.js')
                 logger.error('Error starting webserver and nginx for application: ' + error);
             })
     });
+
