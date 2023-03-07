@@ -1,6 +1,6 @@
 {
     "name": "live",
-    "jsondb": "db/v1.json",
+    "jsondb": "db/v1",
     "auth": {
         "username": "admin",
         "password": "datarhei",
@@ -171,7 +171,7 @@
             },
             "rtsp": {
                 "inputOptions": [
-                    "-stimeout 10000000"
+                    "-timeout 10000000"
                 ]
             },
             "rtsp-tcp": {
