@@ -12,7 +12,7 @@
     "start": "node ./src/start"
   },
   "dependencies": {
-    "cookie": "0.4.1",
+    "cookie": "^0.4.2",
     "cookie-parser": "1.4.3",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
