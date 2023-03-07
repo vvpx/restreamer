@@ -6,7 +6,7 @@
  */
 'use strict';
 
-const moment = require('moment-timezone');
+// const moment = require('moment-timezone');
 const printf = require('printf');
 const fs = require('fs');
 
@@ -27,7 +27,7 @@ class Logger {
      * check if the logger is muted
      * @returns {boolean}
      */
-    static isMuted () {
+    static isMuted() {
         return muted;
     }
 
@@ -35,16 +35,15 @@ class Logger {
      * construct a logger object
      * @param {string} context context of the log message (classname.methodname)
      */
-    constructor (context) {
+    constructor(context) {
         this.context = context;
-
         this.debuglog = null;
 
-        if(process.env.RS_DEBUG == 'true') {
+        if (process.env.RS_DEBUG == 'true') {
             let identifier = process.pid + '-' + process.platform + '-' + process.arch;
             try {
                 this.debuglog = fs.openSync('/restreamer/src/webserver/public/debug/Restreamer-' + identifier + '.txt', 'a');
-            } catch(err) {
+            } catch (err) {
                 this.debuglog = null;
                 this.stdout('Error opening debug file ' + identifier + ': ' + err, context, 'INFO');
             } finally {
@@ -54,13 +53,12 @@ class Logger {
     }
 
     logline(message, context, type) {
-        let time = moment().tz(process.env.RS_TIMEZONE).format('DD-MM-YYYY HH:mm:ss.SSS');
-
+        let time = new Date().toISOString().slice(0,19); //toUTCString(); // moment().tz(process.env.RS_TIMEZONE).format('DD-MM-YYYY HH:mm:ss.SSS');
         let logline = '';
-        if(context) {
-            logline = printf('[%s] [%-5s] [%22s] %s', time, type, context, message);
+        if (context) {
+            logline = printf('[%s] [%-5s] [%22s] %s\n', time, type, context, message);
         } else {
-            logline = printf('[%s] [%-5s] %s', time, type, message);
+            logline = printf('[%s] [%-5s] %s\n', time, type, message);
         }
 
         return logline;
@@ -72,14 +70,11 @@ class Logger {
      * @param {string} context
      * @param {string} type
      */
-    stdout (message, context, type) {
-        if(Logger.isMuted()) {
-            return;
+    stdout(message, context, type) {
+        if (!Logger.isMuted()) {
+            let logline = this.logline(message, context, type);
+            process.stdout.write(logline);
         }
-
-        let logline = this.logline(message, context, type);
-
-        process.stdout.write(logline + '\n');
     }
 
     /**
@@ -88,13 +83,13 @@ class Logger {
      * @param {string} context
      * @param {string} type
      */
-    file (message, context, type) {
+    file(message, context, type) {
         let logline = this.logline(message, context, type);
 
-        if(this.debuglog !== null) {
-            fs.appendFile(this.debuglog, logline + '\n', 'utf8', (err) => {
+        if (this.debuglog !== null) {
+            fs.appendFile(this.debuglog, logline, 'utf8', (err) => {
                 // ignore errors
-                if(err) {
+                if (err) {
                     return;
                 }
 
@@ -113,7 +108,7 @@ class Logger {
      * @param {string=} context
      * @param {boolean=} alertGui
      */
-    info (message, context, alertGui) {
+    info(message, context, alertGui) {
         var loggerContext = context;
         var loggerAlertGui = alertGui;
 
@@ -125,7 +120,7 @@ class Logger {
             loggerAlertGui = false;
         }
 
-        if(process.env.RS_DEBUG == 'true') {
+        if (process.env.RS_DEBUG == 'true') {
             this.file(message, loggerContext, 'INFO');
         }
 
@@ -145,7 +140,7 @@ class Logger {
      * @param {string=} context
      * @param {boolean=} alertGui
      */
-    warn (message, context, alertGui) {
+    warn(message, context, alertGui) {
         var loggerContext = context;
         var loggerAlertGui = alertGui;
 
@@ -157,7 +152,7 @@ class Logger {
             loggerAlertGui = false;
         }
 
-        if(process.env.RS_DEBUG == 'true') {
+        if (process.env.RS_DEBUG == 'true') {
             this.file(message, loggerContext, 'WARN');
         }
 
@@ -177,7 +172,7 @@ class Logger {
      * @param {string=} context
      * @param {boolean=} alertGui
      */
-    debug (message, context, alertGui) {
+    debug(message, context, alertGui) {
         var loggerContext = context;
         var loggerAlertGui = alertGui;
 
@@ -189,7 +184,7 @@ class Logger {
             loggerAlertGui = false;
         }
 
-        if(process.env.RS_DEBUG == 'true') {
+        if (process.env.RS_DEBUG == 'true') {
             this.file(message, loggerContext, 'DEBUG');
         }
 
@@ -210,7 +205,7 @@ class Logger {
      * @param {string=} context
      * @param {boolean=} alertGui
      */
-    error (message, context, alertGui) {
+    error(message, context, alertGui) {
         var loggerContext = context;
         var loggerAlertGui = alertGui;
 
@@ -222,7 +217,7 @@ class Logger {
             loggerAlertGui = false;
         }
 
-        if(process.env.RS_DEBUG == 'true') {
+        if (process.env.RS_DEBUG == 'true') {
             this.file(message, loggerContext, 'ERROR');
         }
 
