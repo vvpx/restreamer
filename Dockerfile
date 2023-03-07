@@ -11,7 +11,7 @@ ARG NGINX_VERSION=1.21.3
 ARG NGINXRTMP_VERSION=1.2.2
 ARG NODE_VERSION=16.13.0
 
-ENV SRC="/usr/local/" \
+ENV SRC="/usr/local" \
     LD_LIBRARY_PATH="/usr/local/lib" \
     PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 
@@ -93,8 +93,7 @@ curl -L "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -xvz \
 RUN --mount=type=tmpfs,target=/build \
 curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" | tar -xvJ \
 && cd node-v${NODE_VERSION}-linux-x64 \
-&& cp -R bin /usr/local \
-&& cp -R lib /usr/local
+&& cp -R bin lib /usr/local
 
 COPY run.sh package.json package-lock.json gruntfile.js /restreamer/
 COPY conf /restreamer/conf/
@@ -109,12 +108,12 @@ RUN cd /restreamer \
 && npm prune --production
 
 # cleanup
-RUN echo "Do cleanup" \
+RUN echo "final cleanup" \
 && rm /restreamer/gruntfile.js \
 && rm -rf /restreamer/src/webserver/public/scripts \
-&& rm -rf ${SRC}/lib/node_modules/corepack \
-&& rm -rf ${SRC}/lib/node_modules/npm \
-&& rm -rf ${SRC}/lib/*.a
+&& rm -rf ${SRC}/lib/node_modules \
+&& rm -rf ${SRC}/lib/*.a \
+&& cd ${SRC}/bin && rm -f nasm ndisasm npm npx corepack
 
 FROM $IMAGE
 WORKDIR /restreamer
@@ -132,6 +131,7 @@ zlib1g \
 v4l-utils \
 libv4l-0 \
 alsa-utils \
+&& apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8080 8181
