@@ -17,6 +17,8 @@ const LEVEL_INFO = 3;
 const LEVEL_DEBUG = 4;
 process.env.RS_LOGLEVEL = process.env.RS_LOGLEVEL || LEVEL_INFO;
 const muted = process.env.RS_LOGLEVEL === LEVEL_MUTE;
+const logLevel = parseInt(process.env.RS_LOGLEVEL);
+const rsDebug = process.env.RS_DEBUG == 'true';
 
 /**
  * Class for logger
@@ -84,9 +86,8 @@ class Logger {
      * @param {string} type
      */
     file(message, context, type) {
-        let logline = this.logline(message, context, type);
-
         if (this.debuglog !== null) {
+            let logline = this.logline(message, context, type);
             fs.appendFile(this.debuglog, logline, 'utf8', (err) => {
                 // ignore errors
                 if (err) {
@@ -109,29 +110,29 @@ class Logger {
      * @param {boolean=} alertGui
      */
     info(message, context, alertGui) {
-        var loggerContext = context;
-        var loggerAlertGui = alertGui;
+        let loggerContext = context;
+        // var loggerAlertGui = alertGui;
 
         if (typeof context === 'undefined') {
             loggerContext = this.context;
         }
 
-        if (typeof alertGui === 'undefined') {
-            loggerAlertGui = false;
-        }
+        // if (typeof alertGui === 'undefined') {
+        //     loggerAlertGui = false;
+        // }
 
-        if (process.env.RS_DEBUG == 'true') {
+        if (rsDebug) {
             this.file(message, loggerContext, 'INFO');
         }
 
-        if (process.env.RS_LOGLEVEL >= LEVEL_INFO) {
+        if (logLevel >= LEVEL_INFO) {
             return this.stdout(message, loggerContext, 'INFO');
         }
 
         // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        if (loggerAlertGui) {
-            return;
-        }
+        // if (loggerAlertGui) {
+        //     return;
+        // }
     }
 
     /**
@@ -141,29 +142,29 @@ class Logger {
      * @param {boolean=} alertGui
      */
     warn(message, context, alertGui) {
-        var loggerContext = context;
-        var loggerAlertGui = alertGui;
+        let loggerContext = context;
+        // var loggerAlertGui = alertGui;
 
         if (typeof context === 'undefined') {
             loggerContext = this.context;
         }
 
-        if (typeof alertGui === 'undefined') {
-            loggerAlertGui = false;
-        }
+        // if (typeof alertGui === 'undefined') {
+        //     loggerAlertGui = false;
+        // }
 
-        if (process.env.RS_DEBUG == 'true') {
+        if (rsDebug) {
             this.file(message, loggerContext, 'WARN');
         }
 
-        if (process.env.RS_LOGLEVEL >= LEVEL_WARN) {
+        if (logLevel >= LEVEL_WARN) {
             return this.stdout(message, loggerContext, 'WARN');
         }
 
         // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        if (loggerAlertGui) {
-            return;
-        }
+        // if (loggerAlertGui) {
+        //     return;
+        // }
     }
 
     /**
@@ -173,29 +174,29 @@ class Logger {
      * @param {boolean=} alertGui
      */
     debug(message, context, alertGui) {
-        var loggerContext = context;
-        var loggerAlertGui = alertGui;
+        let loggerContext = context;
+        // var loggerAlertGui = alertGui;
 
         if (typeof context === 'undefined') {
             loggerContext = this.context;
         }
 
-        if (typeof alertGui === 'undefined') {
-            loggerAlertGui = false;
-        }
+        // if (typeof alertGui === 'undefined') {
+        //     loggerAlertGui = false;
+        // }
 
-        if (process.env.RS_DEBUG == 'true') {
+        if (rsDebug) {
             this.file(message, loggerContext, 'DEBUG');
         }
 
-        if (process.env.RS_LOGLEVEL >= LEVEL_DEBUG) {
+        if (logLevel >= LEVEL_DEBUG) {
             return this.stdout(message, loggerContext, 'DEBUG');
         }
 
         // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        if (loggerAlertGui) {
-            return;
-        }
+        // if (loggerAlertGui) {
+        //     return;
+        // }
     }
 
     /**
@@ -221,7 +222,7 @@ class Logger {
             this.file(message, loggerContext, 'ERROR');
         }
 
-        if (process.env.RS_LOGLEVEL >= LEVEL_ERROR) {
+        if (logLevel >= LEVEL_ERROR) {
             return this.stdout(message, loggerContext, 'ERROR');
         }
 
