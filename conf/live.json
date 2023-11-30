@@ -3,7 +3,7 @@
     "jsondb": "db/v1.json",
     "auth": {
         "username": "admin",
-        "password": "datarhei",
+        "password": "admin",
         "token": ""
     },
     "ffmpeg": {
@@ -124,15 +124,14 @@
             "global": {
                 "inputOptions": [
                     "-stats",
-                    "-loglevel quiet",
+                    "-loglevel error",
                     "-err_detect ignore_err",
-                    "-fflags +genpts"
+                    "-fflags nobuffer+genpts"
                 ]
             },
             "video": {
                  "outputOptions": [
-                    "-map_metadata -1",
-                    "-metadata application=vvp/Restreamer"
+                    "-map_metadata -1"
                 ]
             },
             "rtmp": {
@@ -169,6 +168,13 @@
                     "-hls_segment_filename /tmp/hls/live.stream_%09d.m4s"
                 ]
             },
+            "local_mpegts": {
+                "outputOptions": [
+                    "-f hls",
+                    "-hls_flags delete_segments+append_list",
+                    "-hls_segment_type mpegts"
+                ]
+            },
             "rtsp": {
                 "inputOptions": [
                     "-stimeout 10000000"
@@ -186,11 +192,13 @@
             }
         },
         "probe":{
-            "timeout": "30000"
+            "timeout": "30000",
+            "timeout_key": "-stimeout",
+            "socket_timeout": "60000000"
         },
         "monitor": {
-            "restart_wait": "10000",
-            "stale_wait": "60000"
+            "restart_wait": 10000,
+            "stale_wait": 60000
         }
     },
     "nginx": {
@@ -259,7 +267,7 @@
                 "RS_SNAPSHOT_REFRESH_INTERVAL"
             ],
             "type": "string",
-            "defaultValue": "5m",
+            "defaultValue": "0",
             "required": false,
             "description": "Interval for new snapshots (in milliseconds, use suffix 's' for seconds, 'm' for minutes). Use a value of 0 to disable snapshots."
         },
