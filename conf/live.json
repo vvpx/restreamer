@@ -205,11 +205,11 @@
         "command": "/usr/local/nginx/sbin/nginx",
         "args": [
             "-c",
-            "/restreamer/conf/nginx.conf"
+            "/app/conf/nginx.conf"
         ],
         "args_ssl": [
             "-c",
-            "/restreamer/conf/nginx_ssl.conf"
+            "/app/conf/nginx_ssl.conf"
         ],
         "streaming": {
             "ip": "localhost",
