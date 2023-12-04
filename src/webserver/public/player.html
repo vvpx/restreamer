@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Restreamer">
-    <meta name="author" content="datarhei">
+    <meta name="author" content="pokrovskiy_vv">
     <title>Restreamer</title>
     <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico">
     <script src="./config.js"></script>
@@ -64,7 +64,7 @@
         var config = {
             source: 'hls/' + src,
             parentId: '#player',
-            baseUrl: 'libs/scripts/',
+            baseUrl: './libs/scripts',
             plugins: [HlsjsPlayback],
             poster: 'images/live.jpg?t=' + String(new Date().getTime()),
             mediacontrol: { 'seekbar': color, 'buttons': color },
