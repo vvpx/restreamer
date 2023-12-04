@@ -36,10 +36,14 @@ const { Server } = require("socket.io");
  * Class for the ReStreamer webserver, powered by express.js
  */
 class RestreamerExpressApp {
+    v1;
+    app;
+
     /**
      * constructs a new express app with prod or dev config
      */
     constructor() {
+        this.v1 = new apiV1();
         this.app = express();
         this.secretKey = crypto.randomBytes(16).toString("hex");
         this.sessionKey = "restreamer-session";
@@ -100,42 +104,42 @@ class RestreamerExpressApp {
     /**
      * create a promise to check when websockets are ready for bindings
      */
-    createPromiseForWebsockets() {
-        // this.app.set("websocketsReady", Q.defer());
-    }
+    // createPromiseForWebsockets() {
+    //     this.app.set("websocketsReady", Q.defer());
+    // }
 
     /**
      * add the restreamer routes
      */
     addRoutes() {
         indexRouter(this.app);
-        this.app.use("/v1", apiV1);
+        this.app.use("/v1", this.v1.router);
     }
 
     /**
      * add 404 error handling on pages, that have not been found
      */
-    add404ErrorHandling() {
-        this.app.use((req, res, next) => {
-            var err = new Error("Not Found " + req.url);
-            err.status = 404;
-            next(err);
-        });
-    }
+    // add404ErrorHandling() {
+    //     this.app.use((req, res, next) => {
+    //         const err = new Error("Not Found " + req.url);
+    //         err.status = 404;
+    //         next(err);
+    //     });
+    // }
 
     /**
      * add ability for internal server errors
      */
-    add500ErrorHandling() {
-        this.app.use((err, req, res, next) => {
-            logger.error(err);
-            res.status(err.status || 500);
-            res.send({
-                message: err.message,
-                error: {},
-            });
-        });
-    }
+    // add500ErrorHandling() {
+    //     this.app.use((err, req, res, next) => {
+    //         logger.error(err);
+    //         res.status(err.status || 500);
+    //         res.send({
+    //             message: err.message,
+    //             error: {},
+    //         });
+    //     });
+    // }
 
     /**
      * enable websocket session validation
@@ -174,7 +178,8 @@ class RestreamerExpressApp {
      * start the webserver and open the websocket
      * @returns {*|promise}
      */
-    startWebserver() {
+    startWebserver(dataSrc) {
+        this.v1.setSrcData(dataSrc);
         return new Promise(resolve => {
             let server = null;
             logger.info("Starting ...");
@@ -199,9 +204,9 @@ class RestreamerExpressApp {
         this.useSessions();
         this.addParsers();
         this.addCompression();
-        this.addExpressLogger();
+        // this.addExpressLogger();
         this.beautifyJSONResponse();
-        this.createPromiseForWebsockets();
+        // this.createPromiseForWebsockets();
         this.addRoutes();
     }
 
