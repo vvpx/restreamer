@@ -6,8 +6,7 @@
  */
 'use strict';
 
-// const logger = require.main.require('./classes/Logger')('WSController');
-const app = require.main.require('./webserver/app').app;
+const app = require("../webserver/app").app;
 
 /**
  * static class websocket controller, that helps communicating through websockets to different namespaces and ensures
