@@ -65,6 +65,6 @@ window.angular.module('StreamingInterface').controller('streamingStatusControlle
          */
         $scope.kbps = () => {
             var bitrate = $scope.data.progresses ? $scope.data.progresses[$scope.name].currentKbps : 0;
-            return bitrate.toFixed(1);
+            return bitrate ? bitrate.toFixed(1) : 'N/A';
         };
     }]);
