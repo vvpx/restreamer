@@ -7,7 +7,6 @@
 'use strict';
 
 // const moment = require('moment-timezone');
-const printf = require('printf');
 const fs = require('fs');
 
 const LEVEL_MUTE = 0;
@@ -15,10 +14,8 @@ const LEVEL_ERROR = 1;
 const LEVEL_WARN = 2;
 const LEVEL_INFO = 3;
 const LEVEL_DEBUG = 4;
-process.env.RS_LOGLEVEL = process.env.RS_LOGLEVEL || LEVEL_INFO;
-const muted = process.env.RS_LOGLEVEL === LEVEL_MUTE;
-const logLevel = parseInt(process.env.RS_LOGLEVEL);
-const rsDebug = process.env.RS_DEBUG == 'true';
+const rsDebug = ((env = 'false') => env.toLowerCase() === 'true')(process.env.RS_DEBUG);
+const logLevel = rsDebug ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || LEVEL_INFO);
 
 /**
  * Class for logger
@@ -26,25 +23,19 @@ const rsDebug = process.env.RS_DEBUG == 'true';
 class Logger {
 
     /**
-     * check if the logger is muted
-     * @returns {boolean}
-     */
-    static isMuted() {
-        return muted;
-    }
-
-    /**
      * construct a logger object
      * @param {string} context context of the log message (classname.methodname)
      */
     constructor(context) {
+        // console.log('Logger.constructor: %s', context);
         this.context = context;
-        this.debuglog = null;
+        this.debuglog;
 
-        if (process.env.RS_DEBUG == 'true') {
-            let identifier = process.pid + '-' + process.platform + '-' + process.arch;
+        if (rsDebug) {
+            const identifier = process.pid + '-' + process.platform + '-' + process.arch;
+
             try {
-                this.debuglog = fs.openSync('/restreamer/src/webserver/public/debug/Restreamer-' + identifier + '.txt', 'a');
+                this.debuglog = fs.openSync('./src/webserver/public/debug/Restreamer-' + identifier + '.txt', 'a');
             } catch (err) {
                 this.debuglog = null;
                 this.stdout('Error opening debug file ' + identifier + ': ' + err, context, 'INFO');
@@ -54,16 +45,16 @@ class Logger {
         }
     }
 
-    logline(message, context, type) {
-        let time = new Date().toISOString().slice(0,19); //toUTCString(); // moment().tz(process.env.RS_TIMEZONE).format('DD-MM-YYYY HH:mm:ss.SSS');
-        let logline = '';
-        if (context) {
-            logline = printf('[%s] [%-5s] [%22s] %s\n', time, type, context, message);
-        } else {
-            logline = printf('[%s] [%-5s] %s\n', time, type, message);
-        }
-
-        return logline;
+    /**
+     * 
+     * @param {string} message 
+     * @param {string} context 
+     * @param {string} type 
+     * @returns {string}
+     */
+    logline(message, context = this.context, type) {
+        const time = new Date().toISOString().slice(0, 19);
+        return `[${time}] [${type.padEnd(5)}] [${context ? context.padStart(22) : ''}] ${message}\n`;
     }
 
     /**
@@ -73,171 +64,92 @@ class Logger {
      * @param {string} type
      */
     stdout(message, context, type) {
-        if (!Logger.isMuted()) {
-            let logline = this.logline(message, context, type);
-            process.stdout.write(logline);
-        }
+        process.stdout.write(this.logline(message, context, type));
     }
 
     /**
      * print a message to a file
-     * @param {string} message
-     * @param {string} context
+     * @param {string} msd
+     * @param {string} ctx
      * @param {string} type
      */
-    file(message, context, type) {
+    file(msd, ctx, type) {
+        const str = this.logline(msd, ctx, type);
+        process.stdout.write(str);
+
         if (this.debuglog !== null) {
-            let logline = this.logline(message, context, type);
-            fs.appendFile(this.debuglog, logline, 'utf8', (err) => {
-                // ignore errors
-                if (err) {
-                    return;
-                }
-
-                fs.fsync(this.debuglog, (err) => {
-                    return;
-                });
-
+            fs.appendFile(this.debuglog, str, 'utf8', (err) => {
+                if (!err)
+                    fs.fsync(this.debuglog, () => { });
                 return;
             });
         }
     }
 
+    info(msg, ctx) { }
+    warn(msg, ctx) { }
+    debug(msg, ctx) { }
+    error(msg, ctx) { }
+}
+
+
+if (true) {
+
     /**
-     * print an info message if LOG_LEVEL >= LEVEL_INFO
-     * @param {string} message
-     * @param {string=} context
-     * @param {boolean=} alertGui
+     * 
+     * @param {Function} f
+     * @param {string} type
+     * @returns {Function}
      */
-    info(message, context, alertGui) {
-        let loggerContext = context;
-        // var loggerAlertGui = alertGui;
-
-        if (typeof context === 'undefined') {
-            loggerContext = this.context;
+    function wrap(f, type) {
+        return function (msg, ctx) {
+            this.file(msg, ctx, type);
+            f.apply(msg, ctx);
         }
-
-        // if (typeof alertGui === 'undefined') {
-        //     loggerAlertGui = false;
-        // }
-
-        if (rsDebug) {
-            this.file(message, loggerContext, 'INFO');
-        }
-
-        if (logLevel >= LEVEL_INFO) {
-            return this.stdout(message, loggerContext, 'INFO');
-        }
-
-        // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        // if (loggerAlertGui) {
-        //     return;
-        // }
     }
 
     /**
-     * print a warning message if LOG_LEVEL >= LEVEL_WARN
-     * @param {string} message
-     * @param {string=} context
-     * @param {boolean=} alertGui
+     * 
+     * @param {string} type
+     * @returns {Function}
      */
-    warn(message, context, alertGui) {
-        let loggerContext = context;
-        // var loggerAlertGui = alertGui;
-
-        if (typeof context === 'undefined') {
-            loggerContext = this.context;
+    function func(type) {
+        return function (msg, ctx) {
+            this.file(msg, ctx, type);
         }
-
-        // if (typeof alertGui === 'undefined') {
-        //     loggerAlertGui = false;
-        // }
-
-        if (rsDebug) {
-            this.file(message, loggerContext, 'WARN');
-        }
-
-        if (logLevel >= LEVEL_WARN) {
-            return this.stdout(message, loggerContext, 'WARN');
-        }
-
-        // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        // if (loggerAlertGui) {
-        //     return;
-        // }
     }
 
-    /**
-     * print a debug message if LOG_LEVEL >= LEVEL_DEBUG
-     * @param {string} message
-     * @param {string=} context
-     * @param {boolean=} alertGui
-     */
-    debug(message, context, alertGui) {
-        let loggerContext = context;
-        // var loggerAlertGui = alertGui;
+    const proto = Logger.prototype;
+    const x = [
+        { level: LEVEL_INFO, name: 'info', type: 'INFO' },
+        { level: LEVEL_WARN, name: 'warn', type: 'WARN' },
+        { level: LEVEL_ERROR, name: 'error', type: 'ERROR' },
+        { level: LEVEL_DEBUG, name: 'debug', type: 'DEBUG' },
+    ];
 
-        if (typeof context === 'undefined') {
-            loggerContext = this.context;
-        }
+    if (rsDebug) {
+        proto.info = func('INFO');
+        proto.warn = func('WARN');
+        proto.error = func('ERROR');
+        proto.debug = func('DEBUG');
+    } else {
+        // console.log(`logLevel: ${logLevel}`)
 
-        // if (typeof alertGui === 'undefined') {
-        //     loggerAlertGui = false;
+        x.filter((e) => logLevel >= e.level)
+            .forEach((e) => {
+                // console.log(`add ${e.type}`)
+                proto[e.name] = function (msg, cxt) {
+                    process.stdout.write(this.logline(msg, cxt, e.type))
+                }
+            });
+
+        // for (let o of x) {
+        //     if (logLevel >= o.level) proto[o.name] = function (msg, cxt) { this.stdout(msg, cxt, o.type); }
         // }
-
-        if (rsDebug) {
-            this.file(message, loggerContext, 'DEBUG');
-        }
-
-        if (logLevel >= LEVEL_DEBUG) {
-            return this.stdout(message, loggerContext, 'DEBUG');
-        }
-
-        // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        // if (loggerAlertGui) {
-        //     return;
-        // }
-    }
-
-    /**
-     * print a debug message if LOG_LEVEL >= LEVEL_ERROR
-     * sends a string to
-     * @param {string} message
-     * @param {string=} context
-     * @param {boolean=} alertGui
-     */
-    error(message, context, alertGui) {
-        var loggerContext = context;
-        var loggerAlertGui = alertGui;
-
-        if (typeof context === 'undefined') {
-            loggerContext = this.context;
-        }
-
-        if (typeof alertGui === 'undefined') {
-            loggerAlertGui = false;
-        }
-
-        if (process.env.RS_DEBUG == 'true') {
-            this.file(message, loggerContext, 'ERROR');
-        }
-
-        if (logLevel >= LEVEL_ERROR) {
-            return this.stdout(message, loggerContext, 'ERROR');
-        }
-
-        // todo: if alertGui is activated on frontend and websockets controller, insert emit here
-        if (loggerAlertGui) {
-            return;
-        }
+        // if (logLevel >= LEVEL_INFO) proto.info = function (msg, cxt) { this.stdout(msg, cxt, 'INFO'); }
     }
 }
 
-// define log levels in logger class
-Logger.LEVEL_ERROR = LEVEL_ERROR;
-Logger.LEVEL_WARN = LEVEL_WARN;
-Logger.LEVEL_INFO = LEVEL_INFO;
-Logger.LEVEL_DEBUG = LEVEL_DEBUG;
 
 module.exports = (context) => {
     return new Logger(context);
