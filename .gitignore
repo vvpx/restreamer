@@ -65,10 +65,8 @@ bin
 #################
 src/webserver/public/dist/**
 src/webserver/public/config.js
-src/webserver/public/images/live.jpg
 db/**
 heapdump
 Gemfile.lock
-_site/**
-
-dummy
+build
+_trash

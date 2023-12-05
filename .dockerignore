@@ -4,12 +4,9 @@ Dockerfile*
 .git
 .editorconfig
 .gitignore
+_trash
 docs
-dummy
 node_modules
-bin
-db
 *.log
 Gemfile.lock
-src/webserver/public/config.js
-src/webserver/public/images/live.jpg
+# src\webserver\public\scripts

@@ -12,10 +12,10 @@ const auth = require.main.exports.config.auth;
 module.exports = (app) => {
     /* Handle Login POST */
     app.post('/login', (req, res, next) => {
-        var username = process.env.RS_USERNAME || auth.username;
-        var password = process.env.RS_PASSWORD || auth.password;
-        var success = false;
-        var message = '';
+        const username = process.env.RS_USERNAME || auth.username;
+        const password = process.env.RS_PASSWORD || auth.password;
+        let success = false;
+        let message = '';
         if (req.body.user === username && req.body.pass === password) {
             req.session.authenticated = true;
             success = true;
@@ -41,7 +41,7 @@ module.exports = (app) => {
 
     /* Handle NGINX-RTMP token */
     app.get('/token', (req, res) => {
-        var token = process.env.RS_TOKEN || auth.token;
+        const token = process.env.RS_TOKEN || auth.token;
         if (token != '') {
             if (req.query.token == token) {
                 res.writeHead(200, {
