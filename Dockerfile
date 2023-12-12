@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y\
 # nasm
 ARG NASM_VERSION=2.16.01
 RUN --mount=type=tmpfs,target=/build \
-    curl -L "https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/nasm-${NASM_VERSION}.tar.xz" | tar -xvJ \
+    curl -L "https://www.nasm.us/pub/nasm/releasebuilds/${NASM_VERSION}/nasm-${NASM_VERSION}.tar.xz" | tar -xJ \
     && cd nasm-${NASM_VERSION} \
     && ./configure \
     && make -j$(nproc) \
@@ -42,7 +42,7 @@ RUN --mount=type=tmpfs,target=/build \
 
 # x264
 RUN --mount=type=tmpfs,target=/build \
-    curl -L https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.bz2 | tar -xvj \
+    curl -L https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.bz2 | tar -xj \
     && cd x264-stable \
     && ./configure --prefix="${SRC}" --bindir="${SRC}/bin" --enable-shared \
     && make -j$(nproc) \
@@ -53,14 +53,14 @@ RUN apt-get install -y libx265-dev
 
 # libmp3lame
 RUN --mount=type=tmpfs,target=/build \
-    curl -L "https://downloads.sourceforge.net/project/lame/lame/${LAME_VERSION}/lame-${LAME_VERSION}.tar.gz" | tar -xvz \
+    curl -L "https://downloads.sourceforge.net/project/lame/lame/${LAME_VERSION}/lame-${LAME_VERSION}.tar.gz" | tar -xz \
     && cd lame-${LAME_VERSION} \
     && ./configure --prefix="${SRC}" --bindir="${SRC}/bin" --disable-static --enable-nasm \
     && make -j$(nproc) \
     && make install
 
 RUN --mount=type=tmpfs,target=/build \
-    curl -L "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" | tar -xvz \
+    curl -L "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" | tar -xz \
     && cd ffmpeg-${FFMPEG_VERSION} \
     && ./configure \
     --bindir="${SRC}/bin" \
@@ -95,7 +95,7 @@ RUN --mount=type=tmpfs,target=/build \
 
 # node.js
 RUN --mount=type=tmpfs,target=/build \
-    curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" | tar -xvJ \
+    curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" | tar -xJ \
     && cd node-v${NODE_VERSION}-linux-x64 \
     && cp -R bin lib /usr/local
 
@@ -149,7 +149,7 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
     ca-certificates\
     procps\
     openssl\
-    # libssl1.1\
+    nano\
     zlib1g\
     # v4l-utils\
     # libv4l-0\
