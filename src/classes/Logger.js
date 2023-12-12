@@ -1,21 +1,13 @@
-/**
- * @file holds the code for the class Logger
- * @link https://github.com/datarhei/restreamer
- * @copyright 2015 datarhei.org
- * @license Apache-2.0
- */
 'use strict';
 
-// const moment = require('moment-timezone');
 const fs = require('fs');
-
 const LEVEL_MUTE = 0;
 const LEVEL_ERROR = 1;
 const LEVEL_WARN = 2;
 const LEVEL_INFO = 3;
 const LEVEL_DEBUG = 4;
-const rsDebug = ((env = 'false') => env.toLowerCase() === 'true')(process.env.RS_DEBUG);
-const logLevel = rsDebug ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || LEVEL_INFO);
+const DEBUG = ((env = 'false') => env.toLowerCase() === 'true')(process.env.RS_DEBUG);
+const LOG_LEVEL = DEBUG ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || LEVEL_INFO);
 
 /**
  * Class for logger
@@ -31,13 +23,12 @@ class Logger {
         this.context = context;
         this.debuglog;
 
-        if (rsDebug) {
+        if (DEBUG) {
             const identifier = process.pid + '-' + process.platform + '-' + process.arch;
-
             try {
                 this.debuglog = fs.openSync('./src/webserver/public/debug/Restreamer-' + identifier + '.txt', 'a');
             } catch (err) {
-                this.debuglog = null;
+                this.debuglog = undefined;
                 this.stdout('Error opening debug file ' + identifier + ': ' + err, context, 'INFO');
             } finally {
                 this.stdout('Enabled logging to ' + identifier, context, 'INFO');
@@ -54,7 +45,7 @@ class Logger {
      */
     logline(message, context = this.context, type) {
         const time = new Date().toISOString().slice(0, 19);
-        return `[${time}] [${type.padEnd(5)}] [${context ? context.padStart(22) : ''}] ${message}\n`;
+        return `[${time}] [${type.padEnd(5)}] [${context ? context.padStart(20) : ''}] ${message}\n`;
     }
 
     /**
@@ -77,7 +68,7 @@ class Logger {
         const str = this.logline(msd, ctx, type);
         process.stdout.write(str);
 
-        if (this.debuglog !== null) {
+        if (this.debuglog !== undefined) {
             fs.appendFile(this.debuglog, str, 'utf8', (err) => {
                 if (!err)
                     fs.fsync(this.debuglog, () => { });
@@ -90,23 +81,31 @@ class Logger {
     warn(msg, ctx) { }
     debug(msg, ctx) { }
     error(msg, ctx) { }
+    // get test() {
+    //     return LOG_LEVEL >= LEVEL_DEBUG ? (msg, ctx) => { this.debug(msg, ctx) } : null;
+    // }
+
+    err = LOG_LEVEL >= LEVEL_ERROR ? this.error : null;
+    wrn = LOG_LEVEL >= LEVEL_WARN ? this.warn : null;
+    inf = LOG_LEVEL >= LEVEL_INFO ? this.info : null;
+    dbg = LOG_LEVEL >= LEVEL_DEBUG ? this.debug : null;
 }
 
 
-if (true) {
+{
 
-    /**
-     * 
-     * @param {Function} f
-     * @param {string} type
-     * @returns {Function}
-     */
-    function wrap(f, type) {
-        return function (msg, ctx) {
-            this.file(msg, ctx, type);
-            f.apply(msg, ctx);
-        }
-    }
+    // /**
+    //  * 
+    //  * @param {Function} f
+    //  * @param {string} type
+    //  * @returns {Function}
+    //  */
+    // function wrap(f, type) {
+    //     return function (msg, ctx) {
+    //         this.file(msg, ctx, type);
+    //         f.apply(msg, ctx);
+    //     }
+    // }
 
     /**
      * 
@@ -127,7 +126,7 @@ if (true) {
         { level: LEVEL_DEBUG, name: 'debug', type: 'DEBUG' },
     ];
 
-    if (rsDebug) {
+    if (DEBUG) {
         proto.info = func('INFO');
         proto.warn = func('WARN');
         proto.error = func('ERROR');
@@ -135,12 +134,10 @@ if (true) {
     } else {
         // console.log(`logLevel: ${logLevel}`)
 
-        x.filter((e) => logLevel >= e.level)
+        x.filter((e) => LOG_LEVEL >= e.level)
             .forEach((e) => {
                 // console.log(`add ${e.type}`)
-                proto[e.name] = function (msg, cxt) {
-                    process.stdout.write(this.logline(msg, cxt, e.type))
-                }
+                proto[e.name] = function (msg, cxt) { process.stdout.write(this.logline(msg, cxt, e.type)) }
             });
 
         // for (let o of x) {
