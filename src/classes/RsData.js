@@ -1,11 +1,11 @@
-//@ts-check
-
+// @ts-check
 'use strict'
 
 /**
  * Define data structure for Restreamer.data
  */
 function RsData() {
+
     this.timeouts = {
         retry: {
             repeatToLocalNginx: null,
@@ -18,7 +18,7 @@ function RsData() {
         snapshot: {
             repeatToLocalNginx: null
         }
-    };
+    }
 
     this.options = {
         rtspTcp: false,
@@ -58,7 +58,7 @@ function RsData() {
                 timeout: '10'
             }
         }
-    };
+    }
 
     this.states = {
         repeatToLocalNginx: {
@@ -82,10 +82,11 @@ function RsData() {
     }
 
     this.progresses = {
-        // overwritten with ffmpeg process if stream has been started
-        repeatToLocalNginx: {},
-
-        // overwritten with ffmpeg process if stream has been started
+        repeatToLocalNginx: {
+            frames: 0,
+            currentFps: 0,
+            currentKbps: 0
+        },
         repeatToOptionalOutput: {}
     }
 
@@ -98,8 +99,8 @@ function RsData() {
         }
     }
 
-    this.updateAvailable = false;
-    this.publicIp = '127.0.0.1';
+    this.updateAvailable = false
+    this.publicIp = '127.0.0.1'
 }
 
 module.exports = RsData;
