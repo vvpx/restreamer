@@ -8,25 +8,23 @@ ARG FFMPEG_VERSION=4.4.3
 # ARG FFMPEG_VERSION=5.1.2
 ARG NGINX_VERSION=1.22.1
 ARG NGINXRTMP_VERSION=1.2.2
-ARG NODE_VERSION=16.19.0
 
 
+WORKDIR /build
 ENV SRC="/usr/local" \
-    LD_LIBRARY_PATH="/usr/local/lib" \
-    PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
+LD_LIBRARY_PATH="/usr/local/lib" \
+PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 
 RUN apt-get update \
 && apt-get install -y \
-pkg-config \
-curl \
-libtool \
-libssl-dev \
-zlib1g-dev \
-# libasound2-dev \
 build-essential \
+curl \
+pkg-config \
+libpcre3-dev \
+libssl-dev \
+libtool \
+zlib1g-dev \
 nasm
-
-RUN apt-get install -y libpcre3-dev
 
 # nasm
 # RUN mkdir -p /dist && cd /dist && \
@@ -38,11 +36,9 @@ RUN apt-get install -y libpcre3-dev
 #     make install
 
 # x264
-RUN mkdir -p /dist && cd /dist \
-&& curl -OL https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.bz2 \
-&& tar -xvj -f x264-stable.tar.bz2 \
+RUN curl -L https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.bz2 | tar -xvj \
 && cd x264-stable \
-&& ./configure --prefix="${SRC}" --bindir="${SRC}/bin" --enable-shared \
+&& ./configure --prefix="${SRC}" --bindir="${SRC}/bin" --enable-shared --disable-static \
 && make -j$(nproc) \
 && make install
 
@@ -60,43 +56,41 @@ RUN mkdir -p /dist && cd /dist \
 # patch -p1 < /dist/restreamer/contrib/ffmpeg/bitrate.patch && \
 
 # ARG FFMPEG_VERSION=5.1.2
-RUN mkdir -p /dist && cd /dist && \
-    curl -OL "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" && \
-    tar -xvz -f ffmpeg-${FFMPEG_VERSION}.tar.gz && \
-    cd ffmpeg-${FFMPEG_VERSION} && \
-    ./configure \
-    --bindir="${SRC}/bin" \
-    --extra-cflags="-I${SRC}/include" \
-    --extra-ldflags="-L${SRC}/lib" \
-    --prefix="${SRC}" \
-    --enable-nonfree \
-    --enable-gpl \
-    --enable-version3 \
-    # --enable-libmp3lame \
-    --enable-libx264 \
-    --enable-openssl \
-    --enable-postproc \
-    --enable-small \
-    # --enable-static \
-    # --disable-static \
-    # --disable-encoders \
-    # --disable-alsa \
-    --disable-debug \
-    --disable-doc \
-    # --enable-shared \
-    && make -j$(nproc) \
-    && make install \
-    && rm /usr/local/lib/*.a
+RUN curl -OL "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz" \
+&& tar -xvz -f ffmpeg-${FFMPEG_VERSION}.tar.gz \
+&& cd ffmpeg-${FFMPEG_VERSION} \
+&& ./configure \
+--prefix="${SRC}" \
+--bindir="${SRC}/bin" \
+--extra-cflags="-I${SRC}/include" \
+--extra-ldflags="-L${SRC}/lib" \
+--enable-nonfree \
+--enable-gpl \
+# --enable-version3 \
+# --enable-libmp3lame \
+--enable-libx264 \
+--enable-openssl \
+--enable-postproc \
+--enable-small \
+# --enable-static \
+# --disable-static \
+# --disable-encoders \
+# --disable-alsa \
+--disable-debug \
+--disable-doc \
+# --enable-shared \
+&& make -j$(nproc) \
+&& make install \
+&& rm /usr/local/lib/*.a
 
 # nginx-rtmp
-RUN mkdir -p /dist && cd /dist \
-&& curl -OL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" \
+RUN curl -OL "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" \
 && tar -xvz -f "nginx-${NGINX_VERSION}.tar.gz" \
 && curl -OL "https://github.com/arut/nginx-rtmp-module/archive/v${NGINXRTMP_VERSION}.tar.gz" \
 && tar -xvz -f "v${NGINXRTMP_VERSION}.tar.gz" \
-&& sed -i"" -e '/case ESCAPE:/i /* fall through */' nginx-rtmp-module-${NGINXRTMP_VERSION}/ngx_rtmp_eval.c \
+# && sed -i"" -e '/case ESCAPE:/i /* fall through */' nginx-rtmp-module-${NGINXRTMP_VERSION}/ngx_rtmp_eval.c \
 && cd nginx-${NGINX_VERSION} \
-&& ./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_v2_module --add-module=/dist/nginx-rtmp-module-${NGINXRTMP_VERSION} \
+&& ./configure --prefix=${SRC}/nginx --with-http_ssl_module --with-http_v2_module --add-module="../nginx-rtmp-module-${NGINXRTMP_VERSION}" \
 --without-pcre2 \
 # --with-cc-opt="-I /usr/include" \
 # --with-ld-opt="-L /usr/lib/x86_64-linux-gnu" \
@@ -104,25 +98,23 @@ RUN mkdir -p /dist && cd /dist \
 && make install
 
 # node.js
+ARG NODE_VERSION=16.19.1
 # ARG NODE_VERSION=17.9.1
-RUN mkdir -p /dist && cd /dist \
-&& curl -OL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+RUN curl -OL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
 && tar -xvJ -f "node-v${NODE_VERSION}-linux-x64.tar.xz" \
 && rm "node-v${NODE_VERSION}-linux-x64.tar.xz" \
 && cd node-v${NODE_VERSION}-linux-x64 \
-&& cp -R bin /usr/local \
-&& cp -R lib /usr/local
+&& cp -R bin ${SRC} \
+&& cp -R lib ${SRC}
 
-# RUN apt-get --no-install-recommends --no-install-suggests -y install \
-# procps \
-# # v4l-utils \
-# # libv4l-0
 
-COPY . /restreamer
+# COPY . /app
+COPY run.sh package.json package-lock.json gruntfile.js /app/
+COPY conf /app/conf/
+COPY src /app/src/
 
-RUN cd /restreamer \
+RUN cd /app \
 && npm config set update-notifier false \
-# && npm update -g npm \
 && npm install -g grunt-cli \
 && npm install \
 && grunt build \
@@ -133,30 +125,18 @@ RUN cd /restreamer \
 && rm -rf /usr/local/lib/node_modules/npm
 # && npm install --omit=dev \
 
-FROM ${IMAGE}
-COPY --from=builder /usr/local/ /usr/local/
-# COPY --from=builder /usr/local/bin /usr/local/bin
-# COPY --from=builder /usr/local/nginx /usr/local/nginx
-# COPY --from=builder /usr/local/lib /usr/local/lib
-#COPY --from=builder /usr/local/ /usr/local/
-COPY --from=builder /restreamer /restreamer
-# COPY --from=builder /dist/node-v16.13.0-linux-x64/bin /usr/local/bin
-# COPY --from=builder /dist/node-v16.13.0-linux-x64/lib /usr/local/lib
-# COPY --from=builder /dist/node-v16.13.0-linux-x64/ /usr/local/
 
-RUN apt-get update \
-&& apt-get --no-install-recommends --no-install-suggests -y install \
-# alsa-utils \
-# pcre2-utils \
-libssl1.1 \
-openssl \
-&& rm -rf /var/lib/apt/lists/*
+FROM ${IMAGE}
+WORKDIR /app
+COPY --from=builder /usr/local/ /usr/local/
+COPY --from=builder /app/ /app/
+RUN apt-get update && apt-get --no-install-recommends --no-install-suggests -y install\
+        ca-certificates openssl procps\
+    && rm -rf /var/lib/apt/lists/*
 
 # RUN apk add alsa-utils openssl libssl1.1
-WORKDIR /restreamer
+
 EXPOSE 8080 8181
-
-# VOLUME ["/restreamer/db"]
-
+# VOLUME ["/app/db"]
 # CMD ["./run.sh"]
 ENTRYPOINT [ "node", "./src/start.js" ]
