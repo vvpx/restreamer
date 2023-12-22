@@ -23,6 +23,7 @@ function RsData() {
     this.options = {
         rtspTcp: false,
         video: {
+            id: null,
             codec: 'copy',
             preset: 'ultrafast',
             bitrate: '4096',
@@ -31,6 +32,7 @@ function RsData() {
             tune: 'none'
         },
         audio: {
+            id: null,
             codec: 'auto',
             preset: 'silence',
             bitrate: '64',
