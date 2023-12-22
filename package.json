@@ -19,14 +19,14 @@
     "fluent-ffmpeg": "2.1.2",
     "jsonschema": "1.2.0",
     "node-json-db": "^2.1.4",
-    "socket.io": "^4.0.0"
+    "socket.io": "^4.7.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.21.0",
     "@babel/core": "^7.21.0",
     "@babel/preset-env": "^7.20.2",
     "babel-plugin-angularjs-annotate": "^0.10.0",
-    "eslint": "^8.1.0",
+    "eslint": "^8.56.0",
     "grunt": "^1.4.0",
     "grunt-babel": "8.0.0",
     "grunt-contrib-concat": "^2.1.0",
