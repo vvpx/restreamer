@@ -65,8 +65,10 @@ bin
 #################
 src/webserver/public/dist/**
 src/webserver/public/config.js
+Dockerfile-*
 db/**
 heapdump
 Gemfile.lock
 build
 _trash
+Dockerfile-buster
