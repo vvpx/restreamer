@@ -1,0 +1,189 @@
+diff -wa -u orig/capabilities.js ./capabilities.js
+--- orig/capabilities.js	2023-02-15 00:41:35.615000000 +0700
++++ ./capabilities.js	2023-12-16 18:42:30.154594600 +0700
+@@ -19,7 +19,7 @@
+ var lineBreakRegexp = /\r\n|\r|\n/;
+ var filterRegexp = /^(?: [T\.][S\.][C\.] )?([^ ]+) +(AA?|VV?|\|)->(AA?|VV?|\|) +(.*)$/;
+ 
+-var cache = {};
++const cache = fs.existsSync('./cache.json') ? require('./cache.json') : {};
+ 
+ module.exports = function(proto) {
+   /**
+@@ -304,13 +304,13 @@
+         return callback(err);
+       }
+ 
+-      var stdout = stdoutRing.get();
+-      var lines = stdout.split('\n');
+-      var data = {};
+-      var types = { A: 'audio', V: 'video', '|': 'none' };
++      // const stdout = stdoutRing.get();
++      // const lines = stdout.split('\n');
++      const data = {};
++      const types = { A: 'audio', V: 'video', '|': 'none' };
+ 
+-      lines.forEach(function(line) {
+-        var match = line.match(filterRegexp);
++      for (let line of stdoutRing.enumerate()) {
++        let match = line.match(filterRegexp);
+         if (match) {
+           data[match[1]] = {
+             description: match[4],
+@@ -320,7 +320,7 @@
+             multipleOutputs: match[3].length > 1
+           };
+         }
+-      });
++      }
+ 
+       callback(null, cache.filters = data);
+     });
+Only in .: ff.json
+Only in .: options
+Only in .: orig
+Only in .: presets
+diff -wa -u orig/processor.js ./processor.js
+--- orig/processor.js	2023-12-12 20:02:27.516739600 +0700
++++ ./processor.js	2023-12-13 23:13:47.853198800 +0700
+@@ -126,7 +126,7 @@
+       processCB = function() {};
+     }
+ 
+-    var maxLines = 'stdoutLines' in options ? options.stdoutLines : this.options.stdoutLines;
++    const maxLines = 'stdoutLines' in options ? options.stdoutLines : this.options.stdoutLines;
+ 
+     // Find ffmpeg
+     this._getFfmpegPath(function(err, command) {
+@@ -151,9 +151,9 @@
+       // Spawn process
+       var ffmpegProc = spawn(command, args, options);
+ 
+-      if (ffmpegProc.stderr) {
+-        ffmpegProc.stderr.setEncoding('utf8');
+-      }
++      // if (ffmpegProc.stderr) {
++      //   ffmpegProc.stderr.setEncoding('utf8');
++      // }
+ 
+       ffmpegProc.on('error', function(err) {
+         endCB(err);
+@@ -365,7 +365,7 @@
+       }
+     ], callback);
+ 
+-    if (!readMetadata) {
++    if (false) {
+       // Read metadata as soon as 'progress' listeners are added
+ 
+       if (this.listeners('progress').length > 0) {
+Only in .: update
+diff -wa -u orig/utils.js ./utils.js
+--- orig/utils.js	2023-12-12 20:10:25.666584700 +0700
++++ ./utils.js	2023-12-16 09:52:01.209909900 +0700
+@@ -377,14 +377,17 @@
+    * @param {Numebr} maxLines maximum number of lines to store (<= 0 for unlimited)
+    */
+   linesRing: function(maxLines) {
+-    var cbs = [];
+-    var lines = [];
+-    var current = null;
+-    var closed = false
+-    var max = maxLines - 1;
++    const cbs = [];
++    /**@type {Array.<string>} */ let lines = [];
++    let current = '';
++    let closed = false
++    const max = maxLines - 1;
++    // (() => console.log(`linesRing: ${max}`))();
+ 
+     function emit(line) {
+-      cbs.forEach(function(cb) { cb(line); });
++      // cbs.forEach(function (cb) { cb(line); });
++      for (const cb of cbs) cb(line);
++      max && lines.push(line);
+     }
+ 
+     return {
+@@ -393,63 +396,47 @@
+         cbs.push(cb);
+       },
+ 
+-      append: function(str) {
++      append: /**@param {Buffer} chunk*/ function (chunk) {
+         if (closed) return;
+-        if (str instanceof Buffer) str = '' + str;
+-        if (!str || str.length === 0) return;
++        for (let i = 0; i < chunk.length; i++) if (chunk[i] == 13) chunk[i] = 10;
+ 
+-        var newLines = str.split(nlRegexp);
++        const newLines = chunk.toString().split('\n');
++        current += newLines.shift();
+ 
+-        if (newLines.length === 1) {
+-          if (current !== null) {
+-            current = current + newLines.shift();
+-          } else {
+-            current = newLines.shift();
+-          }
+-        } else {
+-          if (current !== null) {
+-            current = current + newLines.shift();
++        if (newLines.length > 0) {
+             emit(current);
+-            lines.push(current);
+-          }
+-
+           current = newLines.pop();
++          newLines.forEach(emit);
+ 
+-          newLines.forEach(function(l) {
+-            emit(l);
+-            lines.push(l);
+-          });
+-
+-          if (max > -1 && lines.length > max) {
++          if (max > 0 && lines.length > max) {
+             lines.splice(0, lines.length - max);
+           }
+         }
+       },
+ 
+       get: function() {
+-        if (current !== null) {
++        if (current) {
+           return lines.concat([current]).join('\n');
+         } else {
+           return lines.join('\n');
+         }
+       },
+ 
+-      close: function() {
+-        if (closed) return;
++      enumerate: function* () {
++        for (const line of lines) yield line;
++        if (current) yield current;
++      },
+ 
+-        if (current !== null) {
+-          emit(current);
+-          lines.push(current);
++      close: function () {
++        if (!closed) {
++          closed = true;
++          current && emit(current);
++          current = '';
+ 
+-          if (max > -1 && lines.length > max) {
+-            lines.shift();
++          if (max > 0 && lines.length > max) lines.shift();
+           }
+-
+-          current = null;
+         }
+ 
+-        closed = true;
+-      }
+     };
+   }
+ };
