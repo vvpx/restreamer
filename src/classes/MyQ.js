@@ -1,6 +1,6 @@
-'use strict';
+'use strict'
 
-const EventEmitter = require('node:events').EventEmitter;
+// const EventEmitter = require('node:events').EventEmitter
 
 /**
  * Replace Q.deferred object
@@ -35,34 +35,31 @@ const EventEmitter = require('node:events').EventEmitter;
 // };
 
 class Qdefer {
-    #resolve;
-    #reject;
-    #resolution_promise;
+    #resolve
+    #reject
 
     constructor() {
-        this.#resolution_promise = new Promise((resolve, reject) => {
-            this.#resolve = resolve;
-            this.#reject = reject;
-        });
+        this.promise = new Promise((resolve, reject) => {
+            this.#resolve = resolve
+            this.#reject = reject
+        })
     }
 
     reject(reason) {
-        this.#reject?.(reason);
-        this.#resolve = null;
-        this.#reject = null;
+        this.#reject?.(reason)
+        this.#resolve = null
+        this.#reject = null
     }
 
     resolve(value) {
-        this.#resolve?.(value);
-        this.#resolve = null;
-        this.#reject = null;
+        this.#resolve?.(value)
+        this.#resolve = null
+        this.#reject = null
     }
 
-    dispose() { this.#resolution_promise = null; }
+    dispose() { this.promise = null }
     
-    get promise() { return this.#resolution_promise; }
-};
-
-module.exports.defer = () => {
-    return new Qdefer()
+    // get promise() { return this.#resolution_promise }
 }
+
+module.exports.defer = () => new Qdefer

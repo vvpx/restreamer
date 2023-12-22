@@ -1,26 +1,22 @@
-/**
- * @file holds the code for the class EnvVar
- * @link https://github.com/datarhei/restreamer
- * @copyright 2015 datarhei.org
- * @license Apache-2.0
- */
-'use strict';
+'use strict'
 
-const logBlacklist = ['RS_PASSWORD'];
+const logBlacklist = ['RS_PASSWORD']
 
 /**
  * Class for environment variables with default values
  */
 class EnvVar {
+    
     constructor() {
-        this.reset();
+        this.messages = []
+        this.errors = false
     }
 
     log(message, level) {
         this.messages.push({
             level: level,
             message: message
-        });
+        })
     }
 
     init(config) {
@@ -31,9 +27,9 @@ class EnvVar {
                 for (let alias of envVar.alias) {
                     // If the alias exists, copy it to the actual name and delete it.
                     if (alias in process.env) {
-                        this.log('The use of ' + alias + ' is deprecated. Please use ' + envVar.name + ' instead', 'warn');
-                        process.env[envVar.name] = process.env[alias];
-                        delete process.env[alias];
+                        this.log('The use of ' + alias + ' is deprecated. Please use ' + envVar.name + ' instead', 'warn')
+                        process.env[envVar.name] = process.env[alias]
+                        delete process.env[alias]
                     }
                 }
             }
@@ -45,31 +41,33 @@ class EnvVar {
                 // Adjust the given value to the required type
                 switch (envVar.type) {
                     case 'int':
-                        process.env[envVar.name] = parseInt(process.env[envVar.name], 10);
-                        break;
+                        process.env[envVar.name] = parseInt(process.env[envVar.name], 10)
+                        break
+
                     case 'bool':
-                        process.env[envVar.name] = process.env[envVar.name] == 'true';
-                        break;
+                        process.env[envVar.name] = process.env[envVar.name] == 'true'
+                        break
+
                     default: // keep strings
-                        break;
+                        break
                 }
 
                 // Cover blacklisted values
-                let value = process.env[envVar.name];
+                let value = process.env[envVar.name]
                 if (logBlacklist.indexOf(envVar.name) != -1) {
-                    value = '******';
+                    value = '******'
                 }
 
-                this.log(envVar.name + ' = ' + value + ' - ' + envVar.description, 'info');
+                this.log(envVar.name + ' = ' + value + ' - ' + envVar.description, 'info')
             }
             else {
                 if (envVar.required == true) {
-                    this.log(envVar.name + ' not set, but required', 'error');
-                    this.errors = true;
+                    this.log(envVar.name + ' not set, but required', 'error')
+                    this.errors = true
                 }
                 else {
-                    this.log(envVar.name + ' = ' + envVar.defaultValue + ' (using default) - ' + envVar.description, 'info');
-                    process.env[envVar.name] = envVar.defaultValue;
+                    this.log(envVar.name + ' = ' + envVar.defaultValue + ' (using default) - ' + envVar.description, 'info')
+                    process.env[envVar.name] = envVar.defaultValue
                 }
             }
         }
@@ -77,33 +75,37 @@ class EnvVar {
 
     list(logger) {
         for (let i = 0; i < this.messages.length; i++) {
-            let m = this.messages[i];
+            let m = this.messages[i]
+
             switch (m.level) {
                 case 'info':
-                    logger.info(m.message, 'ENV');
-                    break;
+                    logger.info(m.message, 'ENV')
+                    break
+
                 case 'warn':
-                    logger.warn(m.message, 'ENV');
-                    break;
+                    logger.warn(m.message, 'ENV')
+                    break
+
                 case 'error':
-                    logger.error(m.message, 'ENV');
-                    break;
+                    logger.error(m.message, 'ENV')
+                    break
+
                 default:
-                    break;
+                    break
             }
         }
 
-        this.messages = [];
+        this.messages = []
     }
 
     hasErrors() {
-        return this.errors;
+        return this.errors
     }
 
-    reset() {
-        this.messages = [];
-        this.errors = false;
-    }
+    // reset() {
+    //     this.messages = []
+    //     this.errors = false
+    // }
 }
 
-module.exports = new EnvVar;
+module.exports = new EnvVar

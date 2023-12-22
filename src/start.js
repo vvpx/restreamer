@@ -62,3 +62,7 @@ require('child_process')
     .on('error', error => {
         logger.err?.(error.message)
     })
+  
+process.on('SIGTERM', () => {
+    logger.info('receive SIGTERM signal')
+})

@@ -41,11 +41,11 @@ RUN --mount=type=tmpfs,target=/build \
     && make install
 
 # x264
-RUN --mount=type=tmpfs,target=/build \
-    curl -L https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.bz2 | tar -xj \
-    && cd x264-stable \
-    && ./configure --prefix="${SRC}" --bindir="${SRC}/bin" --enable-shared \
-    && make -j$(nproc) \
+RUN --mount=type=tmpfs,target=/build\
+    curl -L https://code.videolan.org/videolan/x264/-/archive/stable/x264-stable.tar.bz2 | tar -xj\
+    && cd x264-stable\
+    && ./configure --prefix="${SRC}" --bindir="${SRC}/bin" --enable-shared\
+    && make -j$(nproc)\
     && make install
 
 # x265
@@ -85,17 +85,17 @@ RUN --mount=type=tmpfs,target=/build \
 
 # nginx-rtmp
 RUN --mount=type=tmpfs,target=/build \
-    curl -L "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -xz \
-    && curl -L "https://github.com/arut/nginx-rtmp-module/archive/v${NGINXRTMP_VERSION}.tar.gz" | tar -xz \
-    && sed -i"" -e '/case ESCAPE:/i /* fall through */' nginx-rtmp-module-${NGINXRTMP_VERSION}/ngx_rtmp_eval.c \
-    && cd nginx-${NGINX_VERSION} \
-    && ./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_v2_module --add-module=/build/nginx-rtmp-module-${NGINXRTMP_VERSION} \
-    && make -j$(nproc) \
+    curl -L "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -xz\
+    && curl -L "https://github.com/arut/nginx-rtmp-module/archive/v${NGINXRTMP_VERSION}.tar.gz" | tar -xz\
+    && sed -i"" -e '/case ESCAPE:/i /* fall through */' nginx-rtmp-module-${NGINXRTMP_VERSION}/ngx_rtmp_eval.c\
+    && cd nginx-${NGINX_VERSION}\
+    && ./configure --prefix=/usr/local/nginx --with-http_ssl_module --with-http_v2_module --add-module=/build/nginx-rtmp-module-${NGINXRTMP_VERSION}\
+    && make -j$(nproc)\
     && make install
 
 # node.js
 RUN --mount=type=tmpfs,target=/build \
-    curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" | tar -xJ \
+    curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" | tar -xJ\
     && cd node-v${NODE_VERSION}-linux-x64 \
     && cp -R bin lib /usr/local
 
@@ -135,12 +135,15 @@ rm -rf ${SRC}/lib/node_modules &&\
 rm -rf ${SRC}/lib/*.a &&\
 cd ${SRC}/bin && rm -f nasm ndisasm npm npx corepack
 
+
 FROM scratch as bin-dist
 WORKDIR /dist
 COPY --from=builder /usr/local/bin bin
 COPY --from=builder /usr/local/nginx nginx
 COPY --from=builder /usr/local/lib lib
 
+
+# Build final image
 FROM $IMAGE
 WORKDIR /app
 COPY --from=bin-dist /dist /usr/local

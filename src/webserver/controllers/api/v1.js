@@ -1,58 +1,55 @@
-/**
- * @file controller for routing from /v1
- * @link https://github.com/datarhei/restreamer
- * @copyright 2015 datarhei.org
- * @license Apache-2.0
- */
-'use strict';
+'use strict'
 
-const { Router } = require('express');
-const RsData = require("../../../classes/RsData");
-const version = require('../../../../package.json').version; // require(require('path').join(global.__base, 'package.json')).version;
+const { Router } = require('express')
+const version = globalThis.appVersion
+const replace = /\?token=[^\s]+/
+
+/**@typedef {import ("../../../classes/RsData") RsData}*/
+
 
 class apiV1 {
-    router;
+    router
 
     /** @type {RsData} */
-    #srcData;
+    #srcData
 
     constructor() {
-        this.router = Router();
+        this.router = Router()
 
         this.router.get('/version', (req, res) => {
             res.json({
                 'version': version,
-                'update': 'na' // require.main.require('./classes/Restreamer').data.updateAvailable
-            });
-        });
+                'update': 'n/a'
+            })
+        })
 
         // this.router.get('/ip', (req, res) => {
         //     res.end(this.#srcData.publicIp);
         // });
 
         this.router.get('/states', (req, res) => {
-            const states = this.#srcData.states;
+            const states = this.#srcData.states
 
             const response = {
                 'repeat_to_local_nginx': {
                     type: states.repeatToLocalNginx.type,
-                    message: states.repeatToLocalNginx.message.replace(/\?token=[^\s]+/, '?token=***'),
+                    message: states.repeatToLocalNginx.message.replace(replace, '?token=***'),
                 },
                 'repeat_to_optional_output': {
                     type: states.repeatToOptionalOutput.type,
-                    message: states.repeatToOptionalOutput.message.replace(/\?token=[^\s]+/, '?token=***'),
-                },
-            };
+                    message: states.repeatToOptionalOutput.message.replace(replace, '?token=***')
+                }
+            }
 
-            res.json(response);
-        });
+            res.json(response)
+        })
 
         this.router.get('/process', (req, res) => {
-            res.json(process.memoryUsage());
-        });
+            res.json(process.memoryUsage())
+        })
 
         this.router.get('/progresses', (req, res) => {
-            const progresses = this.#srcData.progresses;
+            const progresses = this.#srcData.progresses
 
             res.json({
                 'repeat_to_local_nginx': {
@@ -69,8 +66,8 @@ class apiV1 {
                     'target_size': progresses.repeatToOptionalOutput.targetSize,
                     'timemark': progresses.repeatToOptionalOutput.timemark
                 }
-            });
-        });
+            })
+        })
     }
 
     /**
@@ -78,8 +75,8 @@ class apiV1 {
      * @param {RsData} src 
      */
     setSrcData(src) {
-        this.#srcData = src;
+        this.#srcData = src
     }
 }
 
-module.exports = apiV1;
+module.exports = apiV1

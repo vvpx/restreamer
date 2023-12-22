@@ -1,12 +1,8 @@
-/**
- * @file holds the code for the class WebsocketsController
- * @link https://github.com/datarhei/restreamer
- * @copyright 2015 datarhei.org
- * @license Apache-2.0
- */
-'use strict';
+'use strict'
 
-const app = require("../webserver/app").app;
+const { Server, Socket } = require("socket.io")
+
+const app = require("../webserver/app").app
 
 /**
  * static class websocket controller, that helps communicating through websockets to different namespaces and ensures
@@ -21,28 +17,28 @@ class WebsocketsController {
      */
     static emit(event, data) {
         // app.get('websocketsReady').promise.then((io) => {
-        //     // logger.debug('Emitting ' + event);
-        //     io.sockets.emit(event, data);
-        // });
-        app.get('io').sockets.emit(event, data);
+        //     // logger.debug('Emitting ' + event)
+        //     io.sockets.emit(event, data)
+        // })
+        
+        app.get('io').sockets.emit(event, data)
     }
 
     /**
      * add callback on WS connection
-     * @param {function} callback
+     * @param {(arg: Socket) => void} callback
      */
     static setConnectCallback(callback) {
         // app.get('websocketsReady').promise.then((io) => {
         //     io.on('connection', (socket) => {
-        //         callback(socket);
-        //     });
-        // });
+        //         callback(socket)
+        //     })
+        // })
 
-        app.get('io')
-            .on('connection', (socket) => {
-                callback(socket);
-            });
+        /**@type {Server} */
+        const io = app.get('io')
+        io.on('connection', callback) // (socket) => { callback(socket); })
     }
 }
 
-module.exports = WebsocketsController;
+module.exports = WebsocketsController

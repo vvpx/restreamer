@@ -119,7 +119,7 @@ const x = [
     { level: LEVEL_WARN, name: 'warn', type: 'WARN' },
     { level: LEVEL_ERROR, name: 'error', type: 'ERROR' },
     { level: LEVEL_DEBUG, name: 'debug', type: 'DEBUG' },
-    { level: 5, name: 'dev', type: 'DEV'}
+    { level: 5, name: 'dev', type: 'DEV' }
 ]
 
 if (DEBUG) {
@@ -128,17 +128,9 @@ if (DEBUG) {
     proto.error = func('ERROR')
     proto.debug = func('DEBUG')
 } else {
-    // console.log(`logLevel: ${logLevel}`)
-
-    x.forEach(e => {
+    for (let e of x)
         if (LOG_LEVEL >= e.level)
             proto[e.name] = function (msg, cxt) { process.stdout.write(this.logline(msg, cxt, e.type)) }
-    })
-
-    // for (let o of x) {
-    //     if (logLevel >= o.level) proto[o.name] = function (msg, cxt) { this.stdout(msg, cxt, o.type) }
-    // }
-    // if (logLevel >= LEVEL_INFO) proto.info = function (msg, cxt) { this.stdout(msg, cxt, 'INFO') }
 }
 
 
