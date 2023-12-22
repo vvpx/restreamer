@@ -1,6 +1,6 @@
-'use strict';
+'use strict'
 
-const transpiledPath = "transpiled";
+const transpiledPath = "transpiled"
 
 const files = {
     //workaround to keep correct order
@@ -33,7 +33,7 @@ const files = {
         'webserver/public/scripts/**/*.js'
     ],
     stylesheets: ['src/webserver/public/css/*.css', '!src/webserver/public/css/restreamer.min.css']
-};
+}
 
 module.exports = function (grunt) {
 
@@ -55,6 +55,15 @@ module.exports = function (grunt) {
             },
             eslint: {
                 command: 'eslint src/*'
+            },
+            ffpatch: {
+                // command: (js, append) => `diff -a -u ${js}.js ${js}_patched.js ${append ? '>>' : '>'}${process.cwd()}/ff.patch`,
+                command: `diff -wa -u orig . >../../../contrib/ff.patch`,
+                cwd: './node_modules/fluent-ffmpeg/lib',
+                options: {
+                    failOnError: false,
+                    stderr: true
+                }
             }
         },
 
@@ -147,44 +156,45 @@ module.exports = function (grunt) {
             }
         }
         */
-    });
+    })
 
     /*
      Load NPM tasks
      */
-    require('load-grunt-tasks')(grunt);
+    require('load-grunt-tasks')(grunt)
+    
     grunt.task.registerTask('loadConfig', 'Task that loads the config into a grunt option.', function () {
-        grunt.config.set('es6Src', files.es6Src);
-        grunt.config.set('transpiledFrontendJs', files.transpiledFrontendJs);
-        grunt.config.set('stylesheets', files.stylesheets);
-    });
-    grunt.loadNpmTasks('grunt-shell');
-    grunt.loadNpmTasks('grunt-babel');
-    grunt.loadNpmTasks('grunt-contrib-watch');
+        grunt.config.set('es6Src', files.es6Src)
+        grunt.config.set('transpiledFrontendJs', files.transpiledFrontendJs)
+        grunt.config.set('stylesheets', files.stylesheets)
+    })
 
-    /*
-     Helper tasks to keep overview
-     */
+    grunt.loadNpmTasks('grunt-shell')
+    grunt.loadNpmTasks('grunt-babel')
+    grunt.loadNpmTasks('grunt-contrib-watch')
+
     // lint
-    grunt.registerTask('lint', ['csslint', 'shell:eslint']);
+    grunt.registerTask('lint', ['csslint', 'shell:eslint'])
+
     // clear old transpile folder and create new one
-    grunt.registerTask('clearOldBuild', ['shell:removeTempTranspilingFolder', 'shell:createTempTranspilingFolder']);
+    grunt.registerTask('clearOldBuild', ['shell:removeTempTranspilingFolder', 'shell:createTempTranspilingFolder'])
+
     // minify the frontend files
-    grunt.registerTask('minifyFrontendFiles', ['cssmin', 'concat', 'uglify']);
+    grunt.registerTask('minifyFrontendFiles', ['cssmin', 'concat', 'uglify'])
 
     /*
      Build Tasks
      */
-    grunt.registerTask('build', ['loadConfig', 'clearOldBuild', 'babel', 'minifyFrontendFiles', 'shell:removeTempTranspilingFolder']);
+    grunt.registerTask('build', ['loadConfig', 'clearOldBuild', 'babel', 'minifyFrontendFiles', 'shell:removeTempTranspilingFolder'])
 
     /*
      Just Compile
      */
-    grunt.registerTask('compile', ['loadConfig', 'clearOldBuild', 'babel', 'minifyFrontendFiles']);
+    grunt.registerTask('compile', ['loadConfig', 'clearOldBuild', 'babel', 'minifyFrontendFiles'])
 
-    /*
-     Run Tasks
-     */
-    grunt.registerTask('run', ['shell:start']);
+    // Run Tasks
+    grunt.registerTask('run', ['shell:start'])
 
-};
+    /**patch fluent */
+    grunt.registerTask('ffpatch', 'create fluent-ffmpeg patch', ['shell:ffpatch']) // ['shell:ffpatch:utils', 'shell:ffpatch:processor:true'])
+}
