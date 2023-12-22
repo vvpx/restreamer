@@ -125,7 +125,7 @@
                 "inputOptions": [
                     "-stats",
                     "-stats_period 2s",
-                    "-loglevel error",
+                    "-v fatal",
                     "-err_detect ignore_err",
                     "-fflags nobuffer+genpts"
                 ]
