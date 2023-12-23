@@ -160,7 +160,15 @@
                             class="select"
                             ng-model="reStreamerData.options.video.fps"
                         >
-                            <option ng-repeat="option in fpsOptions" ng-value="option">{{option}}</option>
+                            <option value="60">60</option>
+                            <option value="59.94">59.94</option>
+                            <option value="50">50</option>
+                            <option value="30">30</option>
+                            <option value="29.97">29.97</option>
+                            <option value="25" selected>25</option>
+                            <option value="12">12</option>
+                            <option value="8">8</option>
+                            <option value="4">4</option>
                         </select>
                     </td>
                     <td></td>
