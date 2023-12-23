@@ -1,7 +1,13 @@
+/**
+ * @file holds the AngularJS mainController
+ * @link https://github.com/datarhei/restreamer
+ * @copyright 2015 datarhei.org
+ * @license Apache-2.0
+ */
 'use strict';
 
 window.angular.module('Main').controller('mainController',
-    ['ws', '$scope', '$location', '$rootScope', '$stateParams', 'config', 'loggerService', function mainController(ws, $scope, $location, $rootScope, $stateParams, config, logger) {
+    ['ws', '$scope', '$location', '$rootScope', '$stateParams', 'config', 'loggerService', function mainController (ws, $scope, $location, $rootScope, $stateParams, config, logger) {
         let setup = false;
         let player = null;
         let posterPlugin = null;
@@ -19,7 +25,7 @@ window.angular.module('Main').controller('mainController',
 
         const initClappr = () => {
             const plugins = [HlsjsPlayback];
-            if ($scope.reStreamerData.options.player.statistics == true) {
+            if($scope.reStreamerData.options.player.statistics == true) {
                 plugins.push(ClapprNerdStats);
                 plugins.push(ClapprStats);
             }
@@ -41,7 +47,7 @@ window.angular.module('Main').controller('mainController',
                 plugins: plugins,
                 clapprStats: {
                     runEach: 1000,
-                    onReport: (metrics) => { },
+                    onReport: (metrics) => {},
                 },
                 clapprNerdStats: {
                     shortcut: ['command+shift+s', 'ctrl+shift+s'],
@@ -49,11 +55,11 @@ window.angular.module('Main').controller('mainController',
                 }
             };
 
-            if ($scope.reStreamerData.options.player.logo.image.length != 0) {
+            if($scope.reStreamerData.options.player.logo.image.length != 0) {
                 config.watermark = $scope.reStreamerData.options.player.logo.image;
                 config.position = $scope.reStreamerData.options.player.logo.position;
 
-                if ($scope.reStreamerData.options.player.logo.link.length != 0) {
+                if($scope.reStreamerData.options.player.logo.link.length != 0) {
                     config.watermarkLink = $scope.reStreamerData.options.player.logo.link;
                 }
             }
@@ -129,7 +135,6 @@ window.angular.module('Main').controller('mainController',
                 srcAddress: ''
             },
         };
-        $scope.fpsOptions = [60, 59.94, 50, 30, 29.97, 25, 16, 8, 4];
 
         $rootScope.windowProtocol = window.location.protocol;
         $rootScope.windowLocationPort = window.location.port ? `:${window.location.port}` : '';
@@ -154,7 +159,7 @@ window.angular.module('Main').controller('mainController',
         $scope.openPlayer = () => {
             initClappr();
 
-            $('#player-modal').modal('show').on('hide.bs.modal', function closeModal(e) {
+            $('#player-modal').modal('show').on('hide.bs.modal', function closeModal (e) {
                 player.stop();
                 $(this).off('hide.bs.modal');
                 $(this).modal('hide');
@@ -195,27 +200,27 @@ window.angular.module('Main').controller('mainController',
             const outputRegexHLS = /^https?:\/\/.*\.m3u8/;
 
             var optionalOutput = '';
-            if ($scope.activateOptionalOutput === true) {
+            if($scope.activateOptionalOutput === true) {
                 optionalOutput = $scope.reStreamerData.addresses.optionalOutputAddress;
             }
 
-            if (streamType == 'repeatToOptionalOutput') {
+            if(streamType == 'repeatToOptionalOutput') {
                 $scope.optionalOutputInputInvalid = true;
 
-                if ($scope.reStreamerData.options.output.type == 'rtmp') {
+                if($scope.reStreamerData.options.output.type == 'rtmp') {
                     $scope.optionalOutputInputInvalid = !outputRegexRTMP.test(optionalOutput);
                 }
-                else if ($scope.reStreamerData.options.output.type == 'hls') {
+                else if($scope.reStreamerData.options.output.type == 'hls') {
                     $scope.optionalOutputInputInvalid = !outputRegexHLS.test(optionalOutput);
                 }
 
-                if ($scope.optionalOutputInputInvalid) {
+                if($scope.optionalOutputInputInvalid) {
                     return;
                 }
             }
             else {
                 $scope.nginxRepeatStreamInputInvalid = !inputRegex.test($scope.reStreamerData.addresses.srcAddress);
-                if ($scope.nginxRepeatStreamInputInvalid) {
+                if($scope.nginxRepeatStreamInputInvalid) {
                     return;
                 }
             }
