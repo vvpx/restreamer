@@ -1048,13 +1048,13 @@ class Restreamer {
             preset: rr.data.options.video.preset,
             bitrate: rr.data.options.video.bitrate,
             fps: rr.data.options.video.fps,
-            gop: (parseInt(rr.data.options.video.fps) * 2) + '',
+            gop: parseInt(rr.data.options.video.fps) * 2,
             profile: rr.data.options.video.profile,
             tune: rr.data.options.video.tune
         }
 
-        for (let o in options.video) {
-            if (o) rr.addStreamOptions(command, options.video[o], replace_video)
+        for (let vo of options.video) {
+            rr.addStreamOptions(command, vo, replace_video)
         }
 
         const replace_audio = {
@@ -1064,8 +1064,8 @@ class Restreamer {
             sampling: rr.data.options.audio.sampling
         }
 
-        for (let o in options.audio) {
-            if (o) this.addStreamOptions(command, options.audio[o], replace_audio)
+        for (let ao in options.audio) {
+            this.addStreamOptions(command, ao, replace_audio)
         }
 
         command
