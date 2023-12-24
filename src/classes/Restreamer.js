@@ -2,7 +2,7 @@
 
 const fs = require('node:fs')
 const path = require('node:path')
-const { execFile } = require('node:child_process')
+const { execFile, ChildProcess } = require('node:child_process')
 
 const FfmpegCommand = require('fluent-ffmpeg')
 const { JsonDB, Config } = require('node-json-db')
@@ -22,7 +22,7 @@ FfmpegCommand.setFfprobePath('/usr/local/bin/ffprobe')
 
 
 function timeout(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms))
+    return new Promise(resolve => setTimeout(resolve, ms).unref())
 }
 
 
@@ -976,7 +976,7 @@ class Restreamer {
      */
     static async startStreamAsync(task, force = false) {
         // remove any running timeouts
-        rr.setTimeout(task.streamType, 'retry', null)
+        // rr.setTimeoutUnsafe(task.streamType, 'retry', null)
         // rr.setTimeout(task.streamType, 'stale', null) // not used
 
         if (!force) {
@@ -1064,10 +1064,11 @@ class Restreamer {
             sampling: rr.data.options.audio.sampling
         }
 
-        for (let ao in options.audio) {
+        for (let ao of options.audio) {
             this.addStreamOptions(command, ao, replace_audio)
         }
 
+        command[Symbol.for('task')] = task
         command
             .on('start', commandLine => {
                 task.reset();
@@ -1085,13 +1086,13 @@ class Restreamer {
             .on('end', () => {
                 task.reset()
                 rr.data.processes[task.streamType] = null
-                rr.setTimeout(task.streamType, 'retry', null)
-                rr.setTimeout(task.streamType, 'stale', null)
+                // rr.setTimeout(task.streamType, 'retry', null)
+                // rr.setTimeout(task.streamType, 'stale', null)
                 rr.data.progresses[task.streamType].currentFps = 0
                 rr.data.progresses[task.streamType].currentKbps = 0
 
                 if (rr.data.userActions[task.streamType] === 'stop') {
-                    rr.updateState(task.streamType, 'disconnected');
+                    rr.updateState(task.streamType, 'disconnected')
                     logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType)
                     return
                 }
@@ -1103,8 +1104,8 @@ class Restreamer {
             .on('error', error => {
                 task.reset()
                 rr.data.processes[task.streamType] = null
-                rr.setTimeout(task.streamType, 'retry', null)
-                rr.setTimeout(task.streamType, 'stale', null)
+                // rr.setTimeout(task.streamType, 'retry', null)
+                // rr.setTimeout(task.streamType, 'stale', null)
                 rr.data.progresses[task.streamType].currentFps = 0
                 rr.data.progresses[task.streamType].currentKbps = 0
 
@@ -1384,15 +1385,13 @@ class Restreamer {
      * @return {void}
      */
     static setTimeoutUnsafe(streamType, target, func, delay) {
-        logger.dev?.(`setTimeoutUnsafe(${target})`)
+        // logger.dev?.(`setTimeoutUnsafe(${target})`)
         const tots = this.data.timeouts
         clearTimeout(tots[target][streamType])
         if (func) tots[target][streamType] = setTimeout(func, delay)
     }
 
-    /**
-     * bind websocket events on application start
-     */
+    /**bind websocket events on application start*/
     static bindWebsocketEvents() {
         WebsocketsController.setConnectCallback(socket => {
             // logger.dbg?.('ConnectionCallback');
@@ -1502,6 +1501,18 @@ class Restreamer {
         //     Restreamer.data.publicIp = '127.0.0.1'
         // })
     }
+
+    static close() {
+        /**@type {FfmpegCommand.FfmpegCommand}*/ let cmd = this.data.processes.repeatToLocalNginx
+        if (cmd?.ffmpegProc) {
+            cmd[Symbol.for('task')].reset()
+            cmd.removeAllListeners('error')
+            cmd.on('error', (err) => { logger.inf?.(err) }).kill()
+            // /**@type {ChildProcess}*/
+            // let ff = cmd.ffmpegProc
+            // ff.stdin.write('q\n')
+        }
+    }
 }
 
 const RsData = require("./RsData.js")
@@ -1559,7 +1570,7 @@ function StrimingTask(streamUrl, streamType) {
                 return
             }
             this.prevnFrame = this.nFrames
-        }, config.ffmpeg.monitor.stale_wait)
+        }, config.ffmpeg.monitor.stale_wait).unref()
     }
 
     this.reset()

@@ -65,4 +65,10 @@ require('child_process')
   
 process.on('SIGTERM', () => {
     logger.info('receive SIGTERM signal')
+    nginxrtmp.close()
+    Restreamer.close()
+    app.server?.close((err) => {
+        if (err) return logger.error(err.message, err.name)
+        logger.inf?.('server closed succefully')
+    }).closeAllConnections?.()
 })

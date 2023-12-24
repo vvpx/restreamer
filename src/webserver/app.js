@@ -34,6 +34,7 @@ class RestreamerExpressApp {
         this.secretKey = crypto.randomBytes(16).toString("hex")
         this.sessionKey = "restreamer-session"
         this.sessionStore = new session.MemoryStore()
+        this.server
 
         if (process.env.RS_NODEJS_ENV === "dev") {
             this.initDev()
@@ -135,7 +136,7 @@ class RestreamerExpressApp {
 
     /**
      * start the webserver and open the websocket
-     * @returns {*|promise}
+     * @returns {promise}
      */
     startWebserver(dataSrc) {
         this.v1.setSrcData(dataSrc)
@@ -143,14 +144,10 @@ class RestreamerExpressApp {
         this.app.set("port", process.env.RS_NODEJS_PORT)
 
         return new Promise(resolve => {
-            const server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
+            const server = this.server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
                 this.app.set("io", new Server(server, { path: "/socket.io" }))
                 this.secureSockets()
                 this.app.set("server", server.address())
-                // logger.dbg?.(`app."server": ${server.address()}`);
-
-                // promise to avoid ws binding before the webserver has been started
-                // this.app.get("websocketsReady").resolve(this.app.get("io"));
                 logger.inf?.("Running on port " + process.env.RS_NODEJS_PORT)
                 resolve()
             })

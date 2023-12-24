@@ -55,19 +55,17 @@ class Nginxrtmp {
 
         this.process.on('close', code => {
             abort = true
-            logger.error('Exited with code: ' + code);
-
-            if ((code === null) || (code < 0)) {
-                return
+            if (code && code > 0) {
+                logger.err?.(`Exited with code: ${code}`)
+                if (this.allowRestart) {
+                    const self = this
+                    setTimeout(() => {
+                        logger.info('Trying to restart ...')
+                        self.start(useSSL)
+                    }, 4 * timeout)
+                }
             }
 
-            if (this.allowRestart) {
-                const self = this
-                setTimeout(() => {
-                    logger.info('Trying to restart ...')
-                    self.start(useSSL)
-                }, 4 * timeout)
-            }
         })
 
         this.process.on('error', err => {
@@ -88,6 +86,11 @@ class Nginxrtmp {
         }
 
         return true
+    }
+
+    close() {
+        this.allowRestart = false
+        this.process?.kill()
     }
 }
 
