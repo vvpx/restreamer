@@ -70,5 +70,5 @@ process.on('SIGTERM', () => {
     app.server?.close((err) => {
         if (err) return logger.error(err.message, err.name)
         logger.inf?.('server closed succefully')
-    }).closeAllConnections?.()
+    })
 })
