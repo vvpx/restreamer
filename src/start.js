@@ -39,7 +39,7 @@ if (env.hasErrors()) process.exit()
 logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`)
 
 require('child_process')
-.fork('./src/classes/RestreamerData.js')
+    .fork('./src/classes/RestreamerData.js')
     .on('close', code => {
         if (code) {
             logger.inf?.(`RestreamerData exit code:${code}`)
@@ -62,13 +62,13 @@ require('child_process')
     .on('error', error => {
         logger.err?.(error.message)
     })
-  
+
 process.on('SIGTERM', () => {
     logger.info('receive SIGTERM signal')
     nginxrtmp.close()
     Restreamer.close()
     app.server?.close((err) => {
         if (err) return logger.error(err.message, err.name)
-        logger.inf?.('server closed succefully')
+        logger.stdout('MAIN', 'app closed succefully')
     })
 })
