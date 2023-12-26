@@ -1,8 +1,12 @@
 'use strict'
 
-const { Server, Socket } = require("socket.io")
+/**
+ * @typedef {import("socket.io").Server} Server
+ * @typedef {import("socket.io").Socket} Socket
+*/
 
 const app = require("../webserver/app").app
+
 
 /**
  * static class websocket controller, that helps communicating through websockets to different namespaces and ensures
