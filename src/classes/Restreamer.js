@@ -2,7 +2,7 @@
 
 const fs = require('node:fs')
 const path = require('node:path')
-const { execFile, ChildProcess } = require('node:child_process')
+const { execFile } = require('node:child_process')
 
 const FfmpegCommand = require('fluent-ffmpeg')
 const { JsonDB, Config } = require('node-json-db')
@@ -279,20 +279,6 @@ class Restreamer {
      */
     static probeStream(streamUrl, streamType) {
         let deferred = Q.defer()
-        // const state = Restreamer.getState(streamType);
-        // if (state != 'connecting') {
-        //     // состояние недостижимо, 'connecting' устанавливается перед вызовом probeStream
-        //     logger.dbg?.('Skipping "probeStream" because state is not "connecting". Current state is "' + state + '".', streamType);
-        //     return null;
-        // }
-
-        // if (streamType == 'repeatToLocalNginx') {
-        //     Restreamer.data.addresses.srcStreams = {
-        //         audio: {},
-        //         video: {}
-        //     };
-        //     Restreamer.writeToDB();
-        // }
 
         const probeArgs = [
             '-of',
@@ -1020,7 +1006,7 @@ class Restreamer {
 
             if (!options) {
                 logger.dbg?.(`Try spawn ffprobe in ${task.restart_wait} ms`, task.streamType)
-                await timeout(task.restart_wait += 100)
+                await timeout(task.restart_wait += 90)
             }
         }
 
@@ -1054,7 +1040,7 @@ class Restreamer {
         }
 
         for (let vo of options.video) {
-            rr.addStreamOptions(command, vo, replace_video)
+            this.addStreamOptions(command, vo, replace_video)
         }
 
         const replace_audio = {
@@ -1507,7 +1493,7 @@ class Restreamer {
         if (cmd?.ffmpegProc) {
             cmd[Symbol.for('task')].reset()
             cmd.removeAllListeners('error')
-            cmd.on('error', (err) => { logger.inf?.(err) }).kill()
+            cmd.on('error', () => { }).kill()
             // /**@type {ChildProcess}*/
             // let ff = cmd.ffmpegProc
             // ff.stdin.write('q\n')
