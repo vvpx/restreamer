@@ -54,7 +54,7 @@ module.exports = function (grunt) {
                 command: `mkdir ${transpiledPath}`
             },
             eslint: {
-                command: 'eslint src/*'
+                command: 'eslint src/**.*js'
             },
             ffpatch: {
                 // command: (js, append) => `diff -a -u ${js}.js ${js}_patched.js ${append ? '>>' : '>'}${process.cwd()}/ff.patch`,
