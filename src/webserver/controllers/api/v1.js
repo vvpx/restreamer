@@ -4,8 +4,7 @@ const { Router } = require('express')
 const version = globalThis.appVersion
 const replace = /\?token=[^\s]+/
 
-/**@typedef {import ("../../../classes/RsData") RsData}*/
-
+/**@typedef {import("../../../classes/RsData")} RsData restreamer data*/
 
 class apiV1 {
     router
