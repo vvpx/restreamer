@@ -1,12 +1,16 @@
+//@ts-check
 'use strict'
+
+const Logger = require("./Logger")
 
 /**
  * @typedef {import("socket.io").Server} Server
  * @typedef {import("socket.io").Socket} Socket
 */
 
+const logger = require('./Logger')('wsControl')
 const app = require("../webserver/app").app
-
+let connections = 0
 
 /**
  * static class websocket controller, that helps communicating through websockets to different namespaces and ensures
@@ -20,12 +24,14 @@ class WebsocketsController {
      * @param {object} data data to emit to the client event listener
      */
     static emit(event, data) {
-        // app.get('websocketsReady').promise.then((io) => {
-        //     // logger.debug('Emitting ' + event)
-        //     io.sockets.emit(event, data)
-        // })
-        
         app.get('io').sockets.emit(event, data)
+    }
+
+    /**
+     * @returns {((event: string, data: object) => void) | null}
+     */
+    static emitOnConnections() {
+        return connections ? this.emit : null
     }
 
     /**
@@ -33,15 +39,14 @@ class WebsocketsController {
      * @param {(arg: Socket) => void} callback
      */
     static setConnectCallback(callback) {
-        // app.get('websocketsReady').promise.then((io) => {
-        //     io.on('connection', (socket) => {
-        //         callback(socket)
-        //     })
-        // })
-
         /**@type {Server} */
         const io = app.get('io')
-        io.on('connection', callback) // (socket) => { callback(socket); })
+        io.on('connection', socket => {
+            ++connections
+            logger.inf?.(`Connection from ${socket.client.conn.remoteAddress}`)
+            socket.on("disconnect", (reason) => logger.inf?.(`${socket.client.conn.remoteAddress} disconnected: ${reason} *${--connections}`))
+            callback(socket)
+        })
     }
 }
 
