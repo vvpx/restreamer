@@ -9,7 +9,7 @@ const { JsonDB, Config } = require('node-json-db')
 const logger = require('./Logger')('Restreamer')
 
 const Q = require('./MyQ.js')
-const WebsocketsController = require('./WebsocketsController')
+const wsCtrl = require('./WebsocketsController')
 const config = globalThis.appConfig // require('../../conf/live.json')
 
 const RTL = "repeatToLocalNginx"
@@ -95,7 +95,7 @@ class Restreamer {
 
         command.on('end', () => {
             logger.inf?.('Updated. Next scheduled update in ' + interval + ' ms.', 'snapshot')
-            WebsocketsController.emit('snapshot', null)
+            wsCtrl.emit('snapshot', null)
             fetchSnapshot()
         })
 
@@ -256,12 +256,12 @@ class Restreamer {
 
     /**send websocket event to GUI to update the state of the streams*/
     static updateStreamDataOnGui() {
-        WebsocketsController.emit('updateStreamData', this.extractDataOfStreams())
+        wsCtrl.emit('updateStreamData', this.extractDataOfStreams())
     }
 
     /**send websocket event to GUI to update the state of the streams*/
     static updateProgressOnGui() {
-        WebsocketsController.emit('updateProgress', this.data.progresses)
+        wsCtrl.emitOnConnections()?.('updateProgress', this.data.progresses)
     }
 
     /**
@@ -1379,7 +1379,7 @@ class Restreamer {
 
     /**bind websocket events on application start*/
     static bindWebsocketEvents() {
-        WebsocketsController.setConnectCallback(socket => {
+        wsCtrl.setConnectCallback(socket => {
             // logger.dbg?.('ConnectionCallback');
             socket.emit('publicIp', this.data.publicIp);
 
