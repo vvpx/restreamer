@@ -62,7 +62,7 @@ class Logger {
      * @param {string} ctx
      * @param {string} type
      */
-    file(type, msg, ctx, type) {
+    file(type, msg, ctx) {
         const str = this.logline(type, msg, ctx)
         process.stdout.write(str)
 
