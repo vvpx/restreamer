@@ -1,14 +1,13 @@
 //@ts-check
 'use strict'
 
-const Logger = require("./Logger")
-
 /**
  * @typedef {import("socket.io").Server} Server
  * @typedef {import("socket.io").Socket} Socket
 */
 
-const logger = require('./Logger')('wsControl')
+const CTX = 'wsControl'
+const logger = require('./Logger')(CTX)
 const app = require("../webserver/app").app
 let connections = 0
 
