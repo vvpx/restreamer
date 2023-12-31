@@ -42,8 +42,8 @@ class WebsocketsController {
         const io = app.get('io')
         io.on('connection', socket => {
             ++connections
-            logger.inf?.(`Connection from ${socket.client.conn.remoteAddress}`)
-            socket.on("disconnect", (reason) => logger.inf?.(`${socket.client.conn.remoteAddress} disconnected: ${reason} *${--connections}`))
+            logger.inf?.(`Connection from ${socket.handshake.headers['x-forwarded-for']}`)
+            socket.on("disconnect", (reason) => logger.inf?.(`${socket.handshake?.headers['x-forwarded-for']} disconnected: ${reason} *${--connections}`))
             callback(socket)
         })
     }
