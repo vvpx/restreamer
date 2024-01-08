@@ -197,12 +197,12 @@ class Restreamer {
      * @param {string} streamType
      */
     static stopStream(streamType) {
-        Restreamer.updateState(streamType, 'stopped')
+        this.updateState(streamType, 'stopped')
         logger.info('Stop streaming', streamType)
 
-        if (Restreamer.data.processes[streamType] !== null) {
-            Restreamer.data.processes[streamType].kill('SIGKILL')
-            Restreamer.data.processes[streamType] = null
+        if (this.data.processes[streamType] !== null) {
+            this.data.processes[streamType].kill('SIGKILL')
+            this.data.processes[streamType] = null
         }
     }
 
@@ -1026,7 +1026,6 @@ class Restreamer {
 
                 rr.startStreamAsync(task)
             }, task.restart_wait)
-            task.restart_wait += 100
         }
 
         const replace_video = {
@@ -1067,7 +1066,6 @@ class Restreamer {
                 }
 
                 logger.dbg?.('Spawned: ' + commandLine, task.streamType)
-                task.beginStaleDetection()
             })
             .on('end', () => {
                 task.reset()
@@ -1105,12 +1103,13 @@ class Restreamer {
                 rr.updateState(task.streamType, 'error', error.message)
                 retry()
             })
+            .once('stderr', () => {
+                logger?.dbg('connected'. task.streamType)
+                this.updateState(task.streamType, 'connected')
+                task.beginStaleDetection()
+                task.connected = true
+            })
             .on('stderr', /**@param {string} str */ str => {
-                if (!task.connected && rr.data.states[task.streamType].type === 'connecting') {
-                    rr.updateState(task.streamType, 'connected')
-                    task.connected = true
-                }
-
                 if (!str.startsWith('frame=')) {
                     logger.wrn?.(`msg: '${str}'`, 'stderr')
                     return
@@ -1134,6 +1133,7 @@ class Restreamer {
 
                 this.updateProgressOnGui()
             })
+
         // .on('progress', (progress) => {
         //     if (!task.connected && Restreamer.data.states[task.streamType].type === 'connecting') {
         //         Restreamer.updateState(task.streamType, 'connected')

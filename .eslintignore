@@ -1,4 +1,3 @@
 node_modules
-src/webserver/public/dist
-src/webserver/public/libs
+src/webserver/public
 *.min.js
