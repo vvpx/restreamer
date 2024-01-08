@@ -43,7 +43,7 @@ class WebsocketsController {
         io.on('connection', socket => {
             ++connections
             logger.inf?.(`Connection from ${socket.handshake.headers['x-forwarded-for']}`)
-            socket.on("disconnect", (reason) => logger.inf?.(`${socket.handshake?.headers['x-forwarded-for']} disconnected: ${reason} *${--connections}`))
+            socket.once("disconnect", (reason) => logger.inf?.(`${socket.handshake?.headers['x-forwarded-for']} disconnected: ${reason} *${--connections}`))
             callback(socket)
         })
     }
