@@ -218,7 +218,7 @@ class Restreamer {
         rr.data.userActions = await db.getData('/userActions')
         rr.writeToPlayerConfig()
 
-        let state = rr.getState(RTL)
+        let state = this.getState(RTL)
         const repeatToLocalNginxReconnecting = ['connected', 'connecting', 'error'].includes(state)
 
         state = rr.getState('repeatToOptionalOutput')
