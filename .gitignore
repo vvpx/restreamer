@@ -23,7 +23,7 @@
 # Logs and databases #
 ######################
 logs
-build/logs
+# build/logs
 *.log
 *.sql
 *.sqlite
@@ -36,7 +36,6 @@ build/logs
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db
 
 # IDE / Editor files #
 ######################
@@ -65,9 +64,9 @@ bin
 #################
 src/webserver/public/dist/**
 src/webserver/public/config.js
-/Dockerfile-*
 db/**
 heapdump
 Gemfile.lock
-build
+build/*
+!build/trixie.dockerfile
 _trash
