@@ -1104,7 +1104,7 @@ class Restreamer {
                 retry()
             })
             .once('stderr', () => {
-                logger?.dbg('connected'. task.streamType)
+                logger.dbg?.('connected'. task.streamType)
                 this.updateState(task.streamType, 'connected')
                 task.beginStaleDetection()
                 task.connected = true
