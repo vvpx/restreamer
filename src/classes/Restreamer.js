@@ -212,33 +212,33 @@ class Restreamer {
      */
     static async restoreProcesses() {
         // let db = new JsonDB(new Config(config.jsondb, true, false))
-        rr.data.addresses = await db.getData('/addresses')
-        rr.data.states = await db.getData('/states')
-        rr.data.options = await db.getData('/options')
-        rr.data.userActions = await db.getData('/userActions')
-        rr.writeToPlayerConfig()
+        this.data.addresses = await db.getData('/addresses')
+        this.data.states = await db.getData('/states')
+        this.data.options = await db.getData('/options')
+        this.data.userActions = await db.getData('/userActions')
+        this.writeToPlayerConfig()
 
         let state = this.getState(RTL)
         const repeatToLocalNginxReconnecting = ['connected', 'connecting', 'error'].includes(state)
 
-        state = rr.getState('repeatToOptionalOutput')
+        state = this.getState('repeatToOptionalOutput')
         const repeatToOptionalOutputReconnecting = ['connected', 'connecting'].includes(state)
-        const adr = rr.data.addresses
+        const adr = this.data.addresses
 
         // check if a stream was repeated locally
         if (repeatToLocalNginxReconnecting && adr.srcAddress) {
-            rr.startStreamAsync(new StrimingTask(adr.srcAddress, RTL), true)
+            this.startStreamAsync(new StrimingTask(adr.srcAddress, RTL), true)
         }
         else {
-            rr.updateState(RTL, 'disconnected')
+            this.updateState(RTL, 'disconnected')
         }
 
         // check if the stream was repeated to an output address
         if (repeatToOptionalOutputReconnecting && adr.optionalOutputAddress) {
-            rr.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true)
+            this.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true)
         }
         else {
-            rr.updateState('repeatToOptionalOutput', 'disconnected')
+            this.updateState('repeatToOptionalOutput', 'disconnected')
         }
     }
 
@@ -962,12 +962,12 @@ class Restreamer {
      */
     static async startStreamAsync(task, force = false) {
         // remove any running timeouts
-        // rr.setTimeoutUnsafe(task.streamType, 'retry', null)
-        // rr.setTimeout(task.streamType, 'stale', null) // not used
+        // this.setTimeoutUnsafe(task.streamType, 'retry', null)
+        // this.setTimeout(task.streamType, 'stale', null) // not used
 
         if (!force) {
             // check if there's currently no other stream connected or connecting
-            const state = rr.getState(task.streamType)
+            const state = this.getState(task.streamType)
             if (state == 'connected' || state == 'connecting') {
                 logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType)
                 return
@@ -975,8 +975,8 @@ class Restreamer {
         }
 
         // check if the user has clicked 'stop' meanwhile, so the startStream process has to be skipped
-        if (rr.getUserAction(task.streamType) === 'stop') {
-            rr.stopStream(task.streamType)
+        if (this.getUserAction(task.streamType) === 'stop') {
+            this.stopStream(task.streamType)
             logger.dbg?.('Skipping "startStream" because "stop" has been clicked', task.streamType)
             return
         }
@@ -984,22 +984,22 @@ class Restreamer {
         logger.inf?.('Start streaming', task.streamType)
 
         // update the state on the frontend
-        rr.updateState(task.streamType, 'connecting')
+        this.updateState(task.streamType, 'connecting')
 
         let options
-        const url = task.streamType === RTL ? task.streamUrl : rr.getRTMPStreamUrl()
+        const url = task.streamType === RTL ? task.streamUrl : this.getRTMPStreamUrl()
 
         while (!options) {
 
-            options = await rr.probeStream(url, task.streamType).catch(
+            options = await this.probeStream(url, task.streamType).catch(
                 /**@param {string} error reject reason*/
                 error => {
                     logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType)
-                    rr.updateState(task.streamType, 'error', error)
+                    this.updateState(task.streamType, 'error', error)
                 })
 
-            if (rr.data.userActions[task.streamType] === 'stop') {
-                rr.updateState(task.streamType, 'disconnected')
+            if (this.data.userActions[task.streamType] === 'stop') {
+                this.updateState(task.streamType, 'disconnected')
                 logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
                 return
             }
@@ -1015,27 +1015,27 @@ class Restreamer {
 
         const retry = () => {
             logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType)
-            rr.setTimeout(task.streamType, 'retry', () => {
+            this.setTimeout(task.streamType, 'retry', () => {
                 logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType)
 
-                if (rr.data.userActions[task.streamType] === 'stop') {
+                if (this.data.userActions[task.streamType] === 'stop') {
                     logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType)
-                    rr.updateState(task.streamType, 'disconnected')
+                    this.updateState(task.streamType, 'disconnected')
                     return
                 }
 
-                rr.startStreamAsync(task)
+                this.startStreamAsync(task)
             }, task.restart_wait)
         }
 
         const replace_video = {
-            videoid: rr.data.options.video.id,
-            preset: rr.data.options.video.preset,
-            bitrate: rr.data.options.video.bitrate,
-            fps: rr.data.options.video.fps,
-            gop: parseInt(rr.data.options.video.fps) * 2,
-            profile: rr.data.options.video.profile,
-            tune: rr.data.options.video.tune
+            videoid: this.data.options.video.id,
+            preset: this.data.options.video.preset,
+            bitrate: this.data.options.video.bitrate,
+            fps: this.data.options.video.fps,
+            gop: parseInt(this.data.options.video.fps) * 2,
+            profile: this.data.options.video.profile,
+            tune: this.data.options.video.tune
         }
 
         for (let vo of options.video) {
@@ -1043,10 +1043,10 @@ class Restreamer {
         }
 
         const replace_audio = {
-            audioid: rr.data.options.audio.id,
-            bitrate: rr.data.options.audio.bitrate,
-            channels: rr.data.options.audio.channels,
-            sampling: rr.data.options.audio.sampling
+            audioid: this.data.options.audio.id,
+            bitrate: this.data.options.audio.bitrate,
+            channels: this.data.options.audio.channels,
+            sampling: this.data.options.audio.sampling
         }
 
         for (let ao of options.audio) {
@@ -1057,10 +1057,10 @@ class Restreamer {
         command
             .on('start', commandLine => {
                 task.reset();
-                rr.data.processes[task.streamType] = command
+                this.data.processes[task.streamType] = command
 
-                if (rr.data.userActions[task.streamType] === 'stop') {
-                    rr.stopStream(task.streamType)
+                if (this.data.userActions[task.streamType] === 'stop') {
+                    this.stopStream(task.streamType)
                     logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', task.streamType)
                     return
                 }
@@ -1069,38 +1069,38 @@ class Restreamer {
             })
             .on('end', () => {
                 task.reset()
-                rr.data.processes[task.streamType] = null
-                // rr.setTimeout(task.streamType, 'retry', null)
-                // rr.setTimeout(task.streamType, 'stale', null)
-                rr.data.progresses[task.streamType].currentFps = 0
-                rr.data.progresses[task.streamType].currentKbps = 0
+                this.data.processes[task.streamType] = null
+                // this.setTimeout(task.streamType, 'retry', null)
+                // this.setTimeout(task.streamType, 'stale', null)
+                this.data.progresses[task.streamType].currentFps = 0
+                this.data.progresses[task.streamType].currentKbps = 0
 
-                if (rr.data.userActions[task.streamType] === 'stop') {
-                    rr.updateState(task.streamType, 'disconnected')
+                if (this.data.userActions[task.streamType] === 'stop') {
+                    this.updateState(task.streamType, 'disconnected')
                     logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType)
                     return
                 }
 
                 logger.inf?.(task.streamType + ': ended normally')
-                rr.updateState(task.streamType, 'stopped')
+                this.updateState(task.streamType, 'stopped')
                 retry()
             })
             .on('error', error => {
                 task.reset()
-                rr.data.processes[task.streamType] = null
-                // rr.setTimeout(task.streamType, 'retry', null)
-                // rr.setTimeout(task.streamType, 'stale', null)
-                rr.data.progresses[task.streamType].currentFps = 0
-                rr.data.progresses[task.streamType].currentKbps = 0
+                this.data.processes[task.streamType] = null
+                // this.setTimeout(task.streamType, 'retry', null)
+                // this.setTimeout(task.streamType, 'stale', null)
+                this.data.progresses[task.streamType].currentFps = 0
+                this.data.progresses[task.streamType].currentKbps = 0
 
-                if (rr.data.userActions[task.streamType] === 'stop') {
-                    rr.updateState(task.streamType, 'disconnected')
+                if (this.data.userActions[task.streamType] === 'stop') {
+                    this.updateState(task.streamType, 'disconnected')
                     logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
                     return
                 }
 
                 logger.error(error.message, task.streamType)
-                rr.updateState(task.streamType, 'error', error.message)
+                this.updateState(task.streamType, 'error', error.message)
                 retry()
             })
             .once('stderr', () => {
@@ -1154,7 +1154,7 @@ class Restreamer {
         //     Restreamer.updateProgressOnGui()
         // })
 
-        rr.data.progresses[task.streamType].frames = 0
+        this.data.progresses[task.streamType].frames = 0
         command.run()
     }
 
@@ -1503,7 +1503,6 @@ class Restreamer {
 
 const RsData = require("./RsData.js")
 Restreamer.data = new RsData
-const rr = Restreamer
 
 /**
  * @typedef Progress
@@ -1552,7 +1551,7 @@ function StrimingTask(streamUrl, streamType) {
             logger.dbg?.(`check stale, frames: ${this.nFrames}`, this.streamType)
             if (!this.connected) return
             if (this.nFrames === this.prevnFrame) {
-                rr.stopStream(this.streamType)
+                this.stopStream(this.streamType)
                 return
             }
             this.prevnFrame = this.nFrames
