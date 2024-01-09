@@ -86,7 +86,8 @@ RUN curl -L "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -xz
 # --without-pcre2 \
 
 # node.js
-ARG NODE_VERSION=21.3.0
+# ARG NODE_VERSION=21.5.0
+ARG NODE_VERSION=20.10.0
 RUN --mount=type=tmpfs,target=/build\
     curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz" | tar -xz\
     && cd ./node-v${NODE_VERSION}-linux-x64\
