@@ -69,4 +69,4 @@ heapdump
 Gemfile.lock
 build/*
 !build/trixie.dockerfile
-_trash
+/_trash
