@@ -1551,7 +1551,7 @@ function StrimingTask(streamUrl, streamType) {
             logger.dbg?.(`check stale, frames: ${this.nFrames}`, this.streamType)
             if (!this.connected) return
             if (this.nFrames === this.prevnFrame) {
-                this.stopStream(this.streamType)
+                Restreamer.stopStream(this.streamType)
                 return
             }
             this.prevnFrame = this.nFrames
