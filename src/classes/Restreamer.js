@@ -1533,6 +1533,9 @@ function StrimingTask(streamUrl, streamType) {
     this.restart_wait
     this.intervalId
     this.prevnFrame
+    /**@type {NodeJS.Timeout} */
+    this.timerId
+    this.timerCb
 
     this.reset = () => {
         this.connected = false
@@ -1556,6 +1559,18 @@ function StrimingTask(streamUrl, streamType) {
             }
             this.prevnFrame = this.nFrames
         }, config.ffmpeg.monitor.stale_wait).unref()
+    }
+
+    this.waitReconnect = () => {
+        return new Promise(resolve => {
+            this.timerCb = resolve
+            this.timerId = setTimeout(this.timerCb, task.restart_wait += 90)
+        })
+    }
+
+    this.cancellWait = () => {
+        this.timerId && clearTimeout(this.timerId)
+        this.timerCb?.()
     }
 
     this.reset()
