@@ -23,16 +23,16 @@ class EnvVar {
         // Cycle through all defined environment variables
         for (let envVar of config.envVars) {
             // Check if the environment variable is set. If not, cycle through the aliases.
-            if (!(envVar.name in process.env)) {
-                for (let alias of envVar.alias) {
-                    // If the alias exists, copy it to the actual name and delete it.
-                    if (alias in process.env) {
-                        this.log('The use of ' + alias + ' is deprecated. Please use ' + envVar.name + ' instead', 'warn')
-                        process.env[envVar.name] = process.env[alias]
-                        delete process.env[alias]
-                    }
-                }
-            }
+            // if (!(envVar.name in process.env)) {
+            //     for (let alias of envVar.alias) {
+            //         // If the alias exists, copy it to the actual name and delete it.
+            //         if (alias in process.env) {
+            //             this.log('The use of ' + alias + ' is deprecated. Please use ' + envVar.name + ' instead', 'warn')
+            //             process.env[envVar.name] = process.env[alias]
+            //             delete process.env[alias]
+            //         }
+            //     }
+            // }
 
             // Check if the environment variable is set and display it, if it is not set
             // apply the default value. In case the environment variable is required and
