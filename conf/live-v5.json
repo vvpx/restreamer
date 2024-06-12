@@ -231,9 +231,7 @@
     "envVars": [
         {
             "name": "RS_NODEJS_PORT",
-            "alias": [
-                "NODEJS_PORT"
-            ],
+            "alias": [],
             "type": "int",
             "defaultValue": "3000",
             "required": false,
@@ -251,9 +249,7 @@
         },
         {
             "name": "RS_LOGLEVEL",
-            "alias": [
-                "LOGGER_LEVEL"
-            ],
+            "alias": [],
             "type": "int",
             "defaultValue": "3",
             "required": false,
@@ -282,9 +278,7 @@
         },
         {
             "name": "RS_USERNAME",
-            "alias": [
-                "RESTREAMER_USERNAME"
-            ],
+            "alias": [],
             "type": "string",
             "defaultValue": "admin",
             "required": false,
@@ -292,9 +286,7 @@
         },
         {
             "name": "RS_PASSWORD",
-            "alias": [
-                "RESTREAMER_PASSWORD"
-            ],
+            "alias": [],
             "type": "string",
             "defaultValue": "datarhei",
             "required": false,
@@ -310,9 +302,7 @@
         },
         {
             "name": "RS_DEBUG_HEAPDUMPS",
-            "alias": [
-                "CREATE_HEAPDUMPS"
-            ],
+            "alias": [],
             "type": "bool",
             "defaultValue": "false",
             "required": false,
