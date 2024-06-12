@@ -12,6 +12,7 @@ LD_LIBRARY_PATH="/usr/local/lib" \
 PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
 
 RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y\
+    apt-utils\
     ca-certificates\
     curl\
     g++\
@@ -19,6 +20,7 @@ RUN apt-get update && apt-get install --no-install-recommends --no-install-sugge
     libpcre2-dev\
     libssl-dev\
     libtool\
+    libzstd-dev\
     make\
     nasm\
     patch\
@@ -49,14 +51,14 @@ RUN  cd ffmpeg-${FFMPEG_VERSION} \
 --prefix="${SRC}" \
 --pkg-config-flags="--static" \
 --bindir="${SRC}/bin" \
---extra-cflags="-I${SRC}/include" \
+--extra-cflags="-I/usr/include" \
 --extra-ldflags="-L${SRC}/lib" \
-# --extra-libs="-lpthread -lm" \
+--extra-libs="-lpthread -lm" \
 --extra-ldexeflags="-static" \
 --ld="g++" \
 --enable-gpl \
 # --enable-gnutls \
---enable-version3 \
+# --enable-version3 \
 # --enable-libmp3lame \
 # --enable-libfreetype \
 --enable-libx264 \
@@ -77,7 +79,7 @@ RUN  cd ffmpeg-${FFMPEG_VERSION} \
 && rm ${SRC}/lib/*.a
 
 # nginx-rtmp
-ARG NGINX_VERSION=1.25.3
+ARG NGINX_VERSION=1.25.4
 RUN curl -L "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -xz \
 && cd nginx-${NGINX_VERSION} \
 && ./configure --prefix=${SRC}/nginx --with-http_ssl_module --with-http_v2_module --add-module="../nginx-rtmp-module-${NGINXRTMP_VERSION}" \
@@ -87,7 +89,7 @@ RUN curl -L "https://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz" | tar -xz
 
 # node.js
 # ARG NODE_VERSION=21.5.0
-ARG NODE_VERSION=20.10.0
+ARG NODE_VERSION=20.11.1
 RUN --mount=type=tmpfs,target=/build\
     curl -L "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz" | tar -xz\
     && cd ./node-v${NODE_VERSION}-linux-x64\
