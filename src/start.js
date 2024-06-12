@@ -21,16 +21,9 @@ if (process.env.RS_DEBUG?.toLowerCase() === "true") {
 }
 
 // show start message
-logger.info('     _       _             _           _ ', false)
-logger.info('  __| | __ _| |_ __ _ _ __| |___   ___(_)', false)
-logger.info(' / _  |/ _  | __/ _  |  __|  _  |/  _ | |', false)
-logger.info('| (_| | (_| | || (_| | |  | | | |  __/| |', false)
-logger.info('|_____|_____|_||_____|_|  |_| |_|____||_|', false)
-logger.info('', false)
 logger.info('Restreamer v' + version, false)
 logger.info('', false)
 logger.info('ENVIRONMENTS', false)
-logger.info('More information in our Docs', false)
 logger.info('', false)
 
 // list environment variables
