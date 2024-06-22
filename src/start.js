@@ -1,35 +1,32 @@
 // @ts-check
-'use strict'
+'use strict';
 
-const { join } = require('node:path')
-const { version } = require('../package.json')
-globalThis.appVersion = version
-globalThis.__src = __dirname
-globalThis.__base = join(__dirname, '..')
-globalThis.__public = join(__dirname, 'webserver/public')
-const config = globalThis.appConfig = require('../conf/live.json')
-const env = require('./classes/EnvVar')
-env.init(config)
+const { join } = require('node:path');
+const { version } = require('../package.json');
+globalThis.appVersion = version;
+globalThis.__src = __dirname;
+globalThis.__base = join(__dirname, '..');
+globalThis.__public = join(__dirname, 'webserver/public');
+const config = globalThis.appConfig = require('../conf/live.json');
+const env = require('./classes/EnvVar');
+env.init(config);
 
-const logger = require('./classes/Logger')('Start')
-const nginxrtmp = require('./classes/Nginxrtmp')()
-const app = require('./webserver/app')
-const Restreamer = require('./classes/Restreamer')
-
+const logger = require('./classes/Logger')('Start');
+logger.info('Restreamer v' + version, false);
+logger.info('========', false);
+// list environment variables
+logger.info('ENVIRONMENTS', false);
+logger.info('========', false);
+env.list(logger);
+if (env.hasErrors()) process.exit();
+logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`);
 if (process.env.RS_DEBUG?.toLowerCase() === "true") {
-    logger.info('Debugging enabled. Check the /debug path in the web interface.')
+    logger.info('Debugging enabled. Check the /debug path in the web interface.');
 }
 
-// show start message
-logger.info('Restreamer v' + version, false)
-logger.info('', false)
-logger.info('ENVIRONMENTS', false)
-logger.info('', false)
-
-// list environment variables
-env.list(logger)
-if (env.hasErrors()) process.exit()
-logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`)
+const nginxrtmp = require('./classes/Nginxrtmp')();
+const app = require('./webserver/app');
+const Restreamer = require('./classes/Restreamer');
 
 require('child_process')
     .fork('./src/classes/RestreamerData.js')
@@ -41,8 +38,8 @@ require('child_process')
 
         app.startWebserver(Restreamer.data)
             .then(() => {
-                Restreamer.bindWebsocketEvents()
-                return nginxrtmp.start(process.env.RS_HTTPS === "true")
+                Restreamer.bindWebsocketEvents();
+                return nginxrtmp.start(process.env.RS_HTTPS === "true");
             })
             .then(() => {
                 return Restreamer.restoreProcesses()
@@ -61,7 +58,7 @@ process.on('SIGTERM', () => {
     nginxrtmp.close()
     Restreamer.close()
     app.server?.close((err) => {
-        if (err) return logger.error(err.message, err.name)
-        logger.stdout('MAIN', 'app closed succefully')
+        if (err) return logger.error(err.message, err.name);
+        logger.stdout('MAIN', 'app closed succefully');
     })
 })
