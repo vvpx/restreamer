@@ -3,7 +3,7 @@
 ARG IMAGE=amd64/debian:trixie-slim
 ARG SRC="/usr/local"
 
-FROM $IMAGE as builder
+FROM $IMAGE AS builder
 WORKDIR /build
 ARG SRC
 
