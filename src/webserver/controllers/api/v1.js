@@ -12,7 +12,8 @@ class apiV1 {
     /** @type {RsData} */
     #srcData
 
-    constructor() {
+    constructor(srcData = null) {
+        this.#srcData = srcData
         this.router = Router()
 
         this.router.get('/version', (req, res) => {

@@ -1,27 +1,28 @@
-"use strict"
+"use strict";
 
 // express
-const express = require("express")
-const session = require("express-session")
-const cookie = require("cookie")
-const cookieParser = require("cookie-parser")
+const express = require("express");
+const session = require("express-session");
+const cookie = require("cookie");
+const cookieParser = require("cookie-parser");
 // const bodyParser = require("body-parser")
 // const compression = require("compression")
 
 // other
-const path = require("path")
-const crypto = require("crypto")
+const path = require("path");
+const crypto = require("crypto");
 
 // modules
-const logger = require("../classes/Logger")("Webserver")
-const indexRouter = require("./controllers/index")
-const apiV1 = require("./controllers/api/v1")
+const logger = require("../classes/Logger")("Webserver");
+
+const indexRouter = require("./controllers/index");
+const apiV1 = require("./controllers/api/v1");
 
 // middleware
 // const expressLogger = require("./middleware/expressLogger");
 
 // socket.io
-const { Server } = require("socket.io")
+const { Server } = require("socket.io");
 
 
 /**Class for the ReStreamer webserver, powered by express.js*/
@@ -29,12 +30,12 @@ class RestreamerExpressApp {
 
     /**constructs a new express app with prod or dev config*/
     constructor() {
-        this.v1 = new apiV1()
-        this.app = express()
-        this.secretKey = crypto.randomBytes(16).toString("hex")
-        this.sessionKey = "restreamer-session"
-        this.sessionStore = new session.MemoryStore()
-        this.server
+        // this.v1 = new apiV1()
+        this.app = express();
+        this.secretKey = crypto.randomBytes(16).toString("hex");
+        this.sessionKey = "restreamer-session";
+        this.sessionStore = new session.MemoryStore();
+        this.server;
 
         if (process.env.RS_NODEJS_ENV === "dev") {
             this.initDev()
@@ -81,7 +82,7 @@ class RestreamerExpressApp {
     /**add the restreamer routes*/
     addRoutes() {
         indexRouter(this.app)
-        this.app.use("/v1", this.v1.router)
+        // this.app.use("/v1", this.v1.router)
     }
 
     /**add 404 error handling on pages, that have not been found*/
@@ -139,9 +140,10 @@ class RestreamerExpressApp {
      * @returns {promise}
      */
     startWebserver(dataSrc) {
-        this.v1.setSrcData(dataSrc)
         logger.info("Starting ...")
         this.app.set("port", process.env.RS_NODEJS_PORT)
+        // this.v1.setSrcData(dataSrc)
+        this.app.use("/v1", new apiV1(dataSrc).router)
 
         return new Promise(resolve => {
             const server = this.server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
@@ -150,7 +152,7 @@ class RestreamerExpressApp {
                 this.app.set("server", server.address())
                 logger.inf?.("Running on port " + process.env.RS_NODEJS_PORT)
                 resolve()
-            })
+            });
         })
     }
 
@@ -169,6 +171,7 @@ class RestreamerExpressApp {
     initProd() {
         logger.debug("Init webserver with PROD environment")
         this.initAlways()
+        this.app.disable('x-powered-by');
         this.app.get("/", (_req, res) => {
             res.sendFile(path.join(global.__public, "index.prod.html"))
         })
@@ -191,5 +194,5 @@ class RestreamerExpressApp {
     }
 }
 
-const restreamerApp = new RestreamerExpressApp
-module.exports = restreamerApp
+const restreamerApp = new RestreamerExpressApp;
+module.exports = restreamerApp;

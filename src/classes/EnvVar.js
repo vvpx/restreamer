@@ -1,6 +1,6 @@
-'use strict'
+'use strict';
 
-const logBlacklist = ['RS_PASSWORD']
+const logBlacklist = ['RS_PASSWORD'];
 
 /**
  * Class for environment variables with default values
@@ -8,8 +8,8 @@ const logBlacklist = ['RS_PASSWORD']
 class EnvVar {
     
     constructor() {
-        this.messages = []
-        this.errors = false
+        this.messages = [];
+        this.errors = false;
     }
 
     log(message, level) {
@@ -41,21 +41,21 @@ class EnvVar {
                 // Adjust the given value to the required type
                 switch (envVar.type) {
                     case 'int':
-                        process.env[envVar.name] = parseInt(process.env[envVar.name], 10)
-                        break
+                        process.env[envVar.name] = parseInt(process.env[envVar.name], 10);
+                        break;
 
                     case 'bool':
-                        process.env[envVar.name] = process.env[envVar.name] == 'true'
-                        break
+                        process.env[envVar.name] = process.env[envVar.name] == 'true';
+                        break;
 
                     default: // keep strings
-                        break
+                        break;
                 }
 
                 // Cover blacklisted values
-                let value = process.env[envVar.name]
+                let value = process.env[envVar.name];
                 if (logBlacklist.indexOf(envVar.name) != -1) {
-                    value = '******'
+                    value = '******';
                 }
 
                 this.log(envVar.name + ' = ' + value + ' - ' + envVar.description, 'info')
@@ -63,11 +63,11 @@ class EnvVar {
             else {
                 if (envVar.required == true) {
                     this.log(envVar.name + ' not set, but required', 'error')
-                    this.errors = true
+                    this.errors = true;
                 }
                 else {
                     this.log(envVar.name + ' = ' + envVar.defaultValue + ' (using default) - ' + envVar.description, 'info')
-                    process.env[envVar.name] = envVar.defaultValue
+                    process.env[envVar.name] = envVar.defaultValue;
                 }
             }
         }
@@ -75,31 +75,31 @@ class EnvVar {
 
     list(logger) {
         for (let i = 0; i < this.messages.length; i++) {
-            let m = this.messages[i]
+            let m = this.messages[i];
 
             switch (m.level) {
                 case 'info':
-                    logger.info(m.message, 'ENV')
-                    break
+                    logger.info(m.message, 'ENV');
+                    break;
 
                 case 'warn':
-                    logger.warn(m.message, 'ENV')
-                    break
+                    logger.warn(m.message, 'ENV');
+                    break;
 
                 case 'error':
-                    logger.error(m.message, 'ENV')
-                    break
+                    logger.error(m.message, 'ENV');
+                    break;
 
                 default:
-                    break
+                    break;
             }
         }
 
-        this.messages = []
+        this.messages = [];
     }
 
     hasErrors() {
-        return this.errors
+        return this.errors;
     }
 
     // reset() {
@@ -108,4 +108,4 @@ class EnvVar {
     // }
 }
 
-module.exports = new EnvVar
+module.exports = new EnvVar;

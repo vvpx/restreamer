@@ -1,22 +1,22 @@
-'use strict'
+'use strict';
 
-const auth = globalThis.appConfig.auth
+const auth = globalThis.appConfig.auth;
 
 module.exports = app => {
     /* Handle Login POST */
     app.post('/login', (req, res, next) => {
-        const username = process.env.RS_USERNAME || auth.username
-        const password = process.env.RS_PASSWORD || auth.password
-        let success = false
-        let message = ''
+        const username = process.env.RS_USERNAME || auth.username;
+        const password = process.env.RS_PASSWORD || auth.password;
+        let success = false;
+        let message = '';
 
         if (req.body.user === username && req.body.pass === password) {
-            req.session.authenticated = true
-            success = true
+            req.session.authenticated = true;
+            success = true;
         } else {
-            message = 'login_invalid'
+            message = 'login_invalid';
             req.session.destroy()
-            success = false
+            success = false;
         }
 
         res.json({

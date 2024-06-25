@@ -1,13 +1,13 @@
 // @ts-check
-'use strict'
+'use strict';
 
-const http = require('http')
-const { spawn } = require('child_process')
-const logger = require('./Logger')('NGINX')
+const http = require('http');
+const { spawn } = require('child_process');
+const logger = require('./Logger')('NGINX');
 
-const { nginx: config } = globalThis.appConfig // require('../../conf/live.json')
-const ping_url = "http://" + config.streaming.ip + ":" + config.streaming.http_port + config.streaming.http_health_path
-const timeout = 256
+const { nginx: config } = globalThis.appConfig; // require('../../conf/live.json')
+const ping_url = "http://" + config.streaming.ip + ":" + config.streaming.http_port + config.streaming.http_health_path;
+const timeout = 256;
 
 
 /**
@@ -27,8 +27,8 @@ class Nginxrtmp {
      * Constructs the NGINX rtmp
      */
     constructor() {
-        this.process = null        // Process handler
-        this.allowRestart = false  // Whether to allow restarts. Restarts are not allowed until the first successful start
+        this.process = null;        // Process handler
+        this.allowRestart = false;  // Whether to allow restarts. Restarts are not allowed until the first successful start
     }
 
     /**
@@ -38,15 +38,15 @@ class Nginxrtmp {
      */
     async start(useSSL) {
         logger.info('Starting...')
-        let running = false
-        let abort = false
+        let running = false;
+        let abort = false;
 
         if (useSSL) {
             logger.info('Enabling HTTPS')
-            this.process = spawn(config.command, config.args_ssl)
+            this.process = spawn(config.command, config.args_ssl);
         }
         else {
-            this.process = spawn(config.command, config.args)
+            this.process = spawn(config.command, config.args);
         }
 
         this.process.stdout.on('data', data => logger.info(data))
@@ -54,11 +54,11 @@ class Nginxrtmp {
         this.process.stderr.on('data', data => logger.error(data, false))
 
         this.process.on('close', code => {
-            abort = true
+            abort = true;
             if (code && code > 0) {
                 logger.err?.(`Exited with code: ${code}`)
                 if (this.allowRestart) {
-                    const self = this
+                    const self = this;
                     setTimeout(() => {
                         logger.info('Trying to restart ...')
                         self.start(useSSL)
@@ -72,16 +72,16 @@ class Nginxrtmp {
             logger.error('Failed to spawn process: ' + err.name + ': ' + err.message)
         })
 
-        const foo = () => new Promise(r => setTimeout(isRunning, timeout, r))
+        const foo = () => new Promise(r => setTimeout(isRunning, timeout, r));
 
-        while (!abort && !(running = await foo())) logger.info(`isRunning: ${running}`)
+        while (!abort && !(running = await foo())) logger.info(`isRunning: ${running}`);
 
         if (running) {
-            this.allowRestart = true
+            this.allowRestart = true;
             logger.info('Successfully started')
         }
         else {
-            this.process = null
+            this.process = null;
             throw new Error('Failed to start')
         }
 
@@ -89,9 +89,9 @@ class Nginxrtmp {
     }
 
     close() {
-        this.allowRestart = false
+        this.allowRestart = false;
         this.process?.kill()
     }
 }
 
-module.exports = () => new Nginxrtmp
+module.exports = () => new Nginxrtmp;
