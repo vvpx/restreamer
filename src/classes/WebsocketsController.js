@@ -1,15 +1,15 @@
 //@ts-check
-'use strict'
+'use strict';
 
 /**
  * @typedef {import("socket.io").Server} Server
  * @typedef {import("socket.io").Socket} Socket
 */
 
-const CTX = 'wsControl'
-const logger = require('./Logger')(CTX)
-const app = require("../webserver/app").app
-let connections = 0
+const ctx = 'wsControl';
+const logger = require('./Logger')(ctx);
+const app = require("../webserver/app").app;
+let connections = 0;
 
 /**
  * static class websocket controller, that helps communicating through websockets to different namespaces and ensures
@@ -23,14 +23,14 @@ class WebsocketsController {
      * @param {object} data data to emit to the client event listener
      */
     static emit(event, data) {
-        app.get('io').sockets.emit(event, data)
+        app.get('io').sockets.emit(event, data);
     }
 
     /**
      * @returns {((event: string, data: object) => void) | null}
      */
     static emitOnConnections() {
-        return connections ? this.emit : null
+        return connections ? this.emit : null;
     }
 
     /**
@@ -39,14 +39,14 @@ class WebsocketsController {
      */
     static setConnectCallback(callback) {
         /**@type {Server} */
-        const io = app.get('io')
+        const io = app.get('io');
         io.on('connection', socket => {
-            ++connections
-            logger.inf?.(`Connection from ${socket.handshake.headers['x-forwarded-for']}`)
-            socket.once("disconnect", (reason) => logger.inf?.(`${socket.handshake?.headers['x-forwarded-for']} disconnected: ${reason} *${--connections}`))
-            callback(socket)
+            ++connections;
+            logger.inf?.(`Connection from ${socket.handshake.headers['x-forwarded-for']}`);
+            socket.once("disconnect", (reason) => logger.inf?.(`${socket.handshake?.headers['x-forwarded-for']} disconnected: ${reason} *${--connections}`));
+            callback(socket);
         })
     }
 }
 
-module.exports = WebsocketsController
+module.exports = WebsocketsController;
