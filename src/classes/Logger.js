@@ -1,38 +1,27 @@
-'use strict'
+'use strict';
 
-const fs = require('fs')
+const fs = require('fs');
 // const LEVEL_MUTE = 0
-const LEVEL_ERROR = 1
-const LEVEL_WARN = 2
-const LEVEL_INFO = 3
-const LEVEL_DEBUG = 4
-const DEBUG = ((env = 'false') => env.toLowerCase() === 'true')(process.env.RS_DEBUG)
-const LOG_LEVEL = DEBUG ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || `${LEVEL_INFO}`)
+const LEVEL_ERROR = 1;
+const LEVEL_WARN = 2;
+const LEVEL_INFO = 3;
+const LEVEL_DEBUG = 4;
+const DEBUG = ((env = 'false') => env.toLowerCase() === 'true')(process.env.RS_DEBUG);
+const LOG_LEVEL = DEBUG ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || `${LEVEL_INFO}`);
 
 
 class Logger {
-    static debuglog
-
-    static {
-        if (DEBUG) {
-            const identifier = process.pid + '-' + process.platform + '-' + process.arch
-            try {
-                this.debuglog = fs.openSync('./src/webserver/public/debug/Restreamer-' + identifier + '.txt', 'a')
-                process.on("exit", () => fs.close(this.debuglog))
-                console.log('Enabled logging to ' + identifier)
-            } catch (err) {
-                this.debuglog = undefined
-                console.error(`${err}`)
-            }
-        }
-    }
 
     /**
      * construct a logger object
      * @param {string} context context of the log message (classname.methodname)
      */
     constructor(context) {
-        this.context = context
+        this.context = context;
+        this.err = LOG_LEVEL >= LEVEL_ERROR ? this.error : null;
+        this.wrn = LOG_LEVEL >= LEVEL_WARN ? this.warn : null;
+        this.inf = LOG_LEVEL >= LEVEL_INFO ? this.info : null;
+        this.dbg = LOG_LEVEL >= LEVEL_DEBUG ? this.debug : null;
     }
 
     /**
@@ -41,9 +30,9 @@ class Logger {
      * @param {string} context 
      * @returns {string}
      */
-    logline(type, message, context = this.context) {
-        const time = new Date().toISOString().slice(0, 19)
-        return `[${time}] [${type.padEnd(5)}] [${context ? context.padStart(20) : ''}] ${message}\n`
+    format(type, message, context = this.context) {
+        const time = new Date().toISOString().slice(0, 19);
+        return `[${time}] [${type.padEnd(5)}] [${context ? context.padStart(20) : ''}] ${message}\n`;
     }
 
     /**
@@ -53,35 +42,13 @@ class Logger {
      * @param {string} [context]
      */
     stdout(type, message, context) {
-        process.stdout.write(this.logline(type, message, context))
-    }
-
-    /**
-     * print a message to a file
-     * @param {string} msd
-     * @param {string} ctx
-     * @param {string} type
-     */
-    file(type, msg, ctx) {
-        const str = this.logline(type, msg, ctx)
-        process.stdout.write(str)
-
-        fs.appendFile(Logger.debuglog, str, 'utf8', (err) => {
-            if (!err)
-                fs.fsync(Logger.debuglog, () => { })
-            return
-        })
+        process.stdout.write(this.format(type, message, context))
     }
 
     info(msg, ctx) { }
     warn(msg, ctx) { }
     debug(msg, ctx) { }
     error(msg, ctx) { }
-
-    err = LOG_LEVEL >= LEVEL_ERROR ? this.error : null
-    wrn = LOG_LEVEL >= LEVEL_WARN ? this.warn : null
-    inf = LOG_LEVEL >= LEVEL_INFO ? this.info : null
-    dbg = LOG_LEVEL >= LEVEL_DEBUG ? this.debug : null
 }
 
 // /**
@@ -97,33 +64,51 @@ class Logger {
 //     }
 // }
 
-/**
- * 
- * @param {string} type
- * @returns {Function}
- */
-function func(type) {
-    return function (msg, ctx) { this.file(type, msg, ctx) }
-}
+let logFile = -1;
+(function () {
+    const proto = Logger.prototype;
+    const x = [
+        { level: LEVEL_INFO, name: 'info', type: 'INFO' },
+        { level: LEVEL_WARN, name: 'warn', type: 'WARN' },
+        { level: LEVEL_ERROR, name: 'error', type: 'ERROR' },
+        { level: LEVEL_DEBUG, name: 'debug', type: 'DEBUG' }
+    ];
 
-const proto = Logger.prototype
-const x = [
-    { level: LEVEL_INFO, name: 'info', type: 'INFO' },
-    { level: LEVEL_WARN, name: 'warn', type: 'WARN' },
-    { level: LEVEL_ERROR, name: 'error', type: 'ERROR' },
-    { level: LEVEL_DEBUG, name: 'debug', type: 'DEBUG' }
-]
+    let stdout = true;
 
-if (DEBUG && Logger.debuglog) {
-    proto.info = func('INFO')
-    proto.warn = func('WARN')
-    proto.error = func('ERROR')
-    proto.debug = func('DEBUG')
-} else {
+    if (DEBUG) {
+        const identifier = process.pid + '-' + process.platform + '-' + process.arch;
+        try {
+            logFile = fs.openSync('./src/webserver/public/debug/' + identifier + '.log', 'a');
+            process.on("exit", () => fs.close(logFile));
+            console.log('Enabled logging to ' + identifier);
+        } catch (err) {
+            console.error(`${err}`);
+        }
+    }
+
+    if (DEBUG && logFile >= 0) {
+        stdout = false;
+
+        proto.file =
+            /**
+             * print a message to a file
+             * @param {string} msg
+             * @param {string} ctx
+             * @param {string} type
+             */
+            function (type, msg, ctx) {
+                const str = this.format(type, msg, ctx);
+                process.stdout.write(str);
+                fs.appendFile(logFile, str, 'utf8', (err) => { !err && fs.fsync(logFile, () => { }); });
+            };
+    }
+
     for (let e of x)
         if (LOG_LEVEL >= e.level)
-            proto[e.name] = function (msg, cxt) { process.stdout.write(this.logline(e.type, msg, cxt)) }
-}
+            proto[e.name] = stdout ?
+                function () { process.stdout.write(this.format(e.type, ...arguments)) } :
+                function () { this.file(e.type, ...arguments) };
+})();
 
-
-module.exports = context => new Logger(context)
+module.exports = context => new Logger(context);
