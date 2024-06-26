@@ -127,18 +127,18 @@ class Restreamer {
             if (!replace) return options
 
             const f = /**@param {String} option*/ option => {
-                let o = option
+                let o = option;
                 for (const r in replace) {
-                    const sub = `{${r}}`
+                    const sub = `{${r}}`;
                     if (o.includes(sub)) {
                         logger.dbg?.(`Replacing ${sub} with "${replace[r]}" in: ${o}`)
-                        o = o.replace(sub, replace[r])
+                        o = o.replace(sub, replace[r]);
                     }
                 }
-                return o
+                return o;
             }
 
-            return (options instanceof Array) ? options.map(e => f(e)) : f(options)
+            return (options instanceof Array) ? options.map(e => f(e)) : f(options);
         }
 
         if ('input' in options) {
@@ -155,30 +155,30 @@ class Restreamer {
     }
 
     static getSnapshotInterval() {
-        const minimalInterval = 10000    // 10 seconds
-        const defaultInterval = 60000    // 60 seconds
-        const parsedInterval = process.env.RS_SNAPSHOT_INTERVAL?.match(/^([0-9]+)(m|s|ms)?$/) ?? null
+        const minimalInterval = 10000;    // 10 seconds
+        const defaultInterval = 60000;    // 60 seconds
+        const parsedInterval = process.env.RS_SNAPSHOT_INTERVAL?.match(/^([0-9]+)(m|s|ms)?$/) ?? null;
 
-        let interval = defaultInterval
+        let interval = defaultInterval;
 
         if (parsedInterval !== null) {
-            interval = parseInt(parsedInterval[1])
+            interval = parseInt(parsedInterval[1]);
 
             if (parsedInterval.length == 3) {
                 switch (parsedInterval[2]) {
                     case 'm':
-                        interval *= 1000 * 60
-                        break
+                        interval *= 1000 * 60;
+                        break;
 
                     case 's':
-                        interval *= 1000
-                        break
+                        interval *= 1000;
+                        break;
 
                     case 'ms':
-                        break
+                        break;
 
                     default:
-                        break
+                        break;
                 }
             }
         }
@@ -187,13 +187,13 @@ class Restreamer {
         }
 
         if (interval == 0) {
-            return 0   // disable snapshots
+            return 0;   // disable snapshots
         }
         else if (interval < minimalInterval) {
-            interval = minimalInterval
+            interval = minimalInterval;
         }
 
-        return interval
+        return interval;
     }
 
     /**
