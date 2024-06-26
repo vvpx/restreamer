@@ -1049,21 +1049,21 @@ class Restreamer {
         task.connected = false;
         const command = this.buildCommand(task);
 
-        const retry = () => {
-            logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
+        // const retry = () => {
+        //     logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
 
-            this.setTimeout(task.streamType, 'retry', () => {
-                logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
+        //     this.setTimeout(task.streamType, 'retry', () => {
+        //         logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
 
-                if (this.data.userActions[task.streamType] === 'stop') {
-                    logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-                    this.updateState(task.streamType, 'disconnected');
-                    return;
-                }
+        //         if (this.data.userActions[task.streamType] === 'stop') {
+        //             logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+        //             this.updateState(task.streamType, 'disconnected');
+        //             return;
+        //         }
 
-                this.startStreamAsync(task);
-            }, task.restart_wait);
-        };
+        //         this.startStreamAsync(task);
+        //     }, task.restart_wait);
+        // };
 
         const replace_video = {
             videoid: this.data.options.video.id,
@@ -1105,7 +1105,7 @@ class Restreamer {
                 logger.dbg?.('Spawned: ' + commandLine, task.streamType);
             })
             .on('end', () => {
-                task.reset()
+                task.reset();
                 this.data.processes[task.streamType] = null;
                 // this.setTimeout(task.streamType, 'retry', null)
                 // this.setTimeout(task.streamType, 'stale', null)
@@ -1120,25 +1120,25 @@ class Restreamer {
 
                 logger.inf?.(task.streamType + ': ended normally');
                 this.updateState(task.streamType, 'stopped');
-                retry()
+                this.retry(task);
             })
             .on('error', error => {
-                task.reset()
-                this.data.processes[task.streamType] = null
+                task.reset();
+                this.data.processes[task.streamType] = null;
                 // this.setTimeout(task.streamType, 'retry', null)
                 // this.setTimeout(task.streamType, 'stale', null)
-                this.data.progresses[task.streamType].currentFps = 0
-                this.data.progresses[task.streamType].currentKbps = 0
+                this.data.progresses[task.streamType].currentFps = 0;
+                this.data.progresses[task.streamType].currentKbps = 0;
 
                 if (this.data.userActions[task.streamType] === 'stop') {
-                    this.updateState(task.streamType, 'disconnected')
-                    logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
-                    return
+                    this.updateState(task.streamType, 'disconnected');
+                    logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+                    return;
                 }
 
                 logger.error(error.message, task.streamType)
                 this.updateState(task.streamType, 'error', error.message)
-                retry()
+                this.retry(task)
             })
             .once('stderr', () => {
                 logger.dbg?.('connected', task.streamType);
@@ -1193,6 +1193,26 @@ class Restreamer {
 
         this.data.progresses[task.streamType].frames = 0
         command.run()
+    }
+
+    /**
+     * перезапуск потока
+     * @param {StrimingTask} task 
+     */
+    static retry (task) {
+        logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
+
+        this.setTimeout(task.streamType, 'retry', () => {
+            logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
+
+            if (this.data.userActions[task.streamType] === 'stop') {
+                logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+                this.updateState(task.streamType, 'disconnected');
+                return;
+            }
+
+            this.startStreamAsync(task);
+        }, task.restart_wait);
     }
 
     /**
