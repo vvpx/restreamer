@@ -14,6 +14,7 @@ const { RaisingTimer: timer } = require('./Timers.js');
 const config = globalThis.appConfig;
 
 const RTL = "repeatToLocalNginx";
+const task_key = Symbol.for('task');
 /**config.ffmpeg.probe.timeout_key */
 const { timeout_key: probe_tot_key, socket_timeout } = config.ffmpeg.probe;
 // const socket_timeout = config.ffmpeg.probe.socket_timeout
@@ -204,9 +205,10 @@ class Restreamer {
         this.updateState(streamType, 'stopped');
         logger.info('Stop streaming', streamType);
 
-        if (this.data.processes[streamType] !== null) {
-            this.data.processes[streamType].kill('SIGKILL');
+        let ffcommand = this.data.processes[streamType];
+        if (ffcommand !== null) {
             this.data.processes[streamType] = null;
+            ffcommand.kill('SIGKILL');
         }
 
         if (rtl_task) {
@@ -1090,7 +1092,7 @@ class Restreamer {
             this.addStreamOptions(command, ao, replace_audio)
         }
 
-        command[Symbol.for('task')] = task;
+        // command[task_key] = task;
         command
             .on('start', commandLine => {
                 task.reset();
@@ -1597,7 +1599,7 @@ class Restreamer {
     static close() {
         /**@type {FfmpegCommand.FfmpegCommand}*/ let cmd = this.data.processes.repeatToLocalNginx;
         if (cmd?.ffmpegProc) {
-            cmd[Symbol.for('task')].reset()
+            rtl_task?.reset(); // cmd[task_key].reset();
             cmd.removeAllListeners('error')
             cmd.on('error', () => { }).kill()
             // /**@type {ChildProcess}*/
@@ -1668,7 +1670,7 @@ function StrimingTask(streamUrl, streamType) {
                 return;
             }
             this.prevnFrame = this.nFrames;
-        }, config.ffmpeg.monitor.stale_wait).unref()
+        }, config.ffmpeg.monitor.stale_wait).unref();
     }
 
     /**
