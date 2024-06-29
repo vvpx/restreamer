@@ -902,10 +902,10 @@ class Restreamer {
     }
 
     static updatePlayerOptions(player) {
-        this.data.options.player = player
-        logger.dbg?.('Storing player options', 'Restreamer')
-        this.writeToPlayerConfig()
-        this.writeToDB()
+        this.data.options.player = player;
+        logger.dbg?.('Storing player options', 'Restreamer');
+        this.writeToPlayerConfig();
+        this.writeToDB();
     }
 
     /**
@@ -913,9 +913,9 @@ class Restreamer {
      * @param {Object} options
      */
     static updateOptions(options) {
-        this.data.options = options
-        this.writeToDB()
-        this.updateStreamDataOnGui()
+        this.data.options = options;
+        this.writeToDB();
+        this.updateStreamDataOnGui();
     }
 
     /**
@@ -961,7 +961,7 @@ class Restreamer {
             command.output(task.streamUrl)
         }
 
-        return command
+        return command;
     }
 
     /**
@@ -974,8 +974,8 @@ class Restreamer {
         const testUserAction = () => {
             if (this.data.userActions[task.streamType] === 'stop') {
                 this.updateState(task.streamType, 'disconnected')
-                logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
-                return true
+                logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+                return true;
             }
             return false;
         }
@@ -1274,15 +1274,15 @@ class Restreamer {
      */
     static startStream(task, force = false) {
         // remove any running timeouts
-        Restreamer.setTimeout(task.streamType, 'retry', null)
-        Restreamer.setTimeout(task.streamType, 'stale', null)
+        Restreamer.setTimeout(task.streamType, 'retry', null);
+        Restreamer.setTimeout(task.streamType, 'stale', null);
 
         if (!force) {
             // check if there's currently no other stream connected or connecting
             let state = Restreamer.getState(task.streamType)
             if (state == 'connected' || state == 'connecting') {
-                logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType)
-                return
+                logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType);
+                return;
             }
         }
 
@@ -1293,18 +1293,18 @@ class Restreamer {
             return;
         }
 
-        logger.inf?.('Start streaming', task.streamType)
+        logger.inf?.('Start streaming', task.streamType);
 
         // update the state on the frontend
         Restreamer.updateState(task.streamType, 'connecting')
         const probePromise = Restreamer.probeStream(
-            task.streamType == RTL ? task.streamUrl : Restreamer.getRTMPStreamUrl(),
+            task.streamType === RTL ? task.streamUrl : Restreamer.getRTMPStreamUrl(),
             task.streamType
-        )
+        );
 
         if (probePromise === null) {
-            logger.dbg?.('Skipping "startStream" because promise is null', task.streamType)
-            return
+            logger.dbg?.('Skipping "startStream" because promise is null', task.streamType);
+            return;
         }
 
         const retry = () => {
@@ -1325,8 +1325,8 @@ class Restreamer {
 
         // after adding outputs, define events on the new FFmpeg stream
         probePromise.then((options) => {
-            task.connected = false
-            const command = this.buildCommand(task)
+            task.connected = false;
+            const command = this.buildCommand(task);
 
             const replace_video = {
                 videoid: this.data.options.video.id,
@@ -1389,56 +1389,56 @@ class Restreamer {
 
                 // stream error handler (error, _stdout, _stderr)
                 .on('error', error => {
-                    Restreamer.data.processes[task.streamType] = null
-                    Restreamer.setTimeout(task.streamType, 'retry', null)
-                    Restreamer.setTimeout(task.streamType, 'stale', null)
-                    Restreamer.data.progresses[task.streamType].currentFps = 0
-                    Restreamer.data.progresses[task.streamType].currentKbps = 0
+                    Restreamer.data.processes[task.streamType] = null;
+                    Restreamer.setTimeout(task.streamType, 'retry', null);
+                    Restreamer.setTimeout(task.streamType, 'stale', null);
+                    Restreamer.data.progresses[task.streamType].currentFps = 0;
+                    Restreamer.data.progresses[task.streamType].currentKbps = 0;
 
                     if (Restreamer.data.userActions[task.streamType] == 'stop') {
-                        Restreamer.updateState(task.streamType, 'disconnected')
-                        logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
-                        return
+                        Restreamer.updateState(task.streamType, 'disconnected');
+                        logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+                        return;
                     }
 
                     // logger.error(error.message, task.streamType);
-                    logger.error(error.toString(), task.streamType)
-                    Restreamer.updateState(task.streamType, 'error', error.toString())
-                    retry()
+                    logger.error(error.toString(), task.streamType);
+                    Restreamer.updateState(task.streamType, 'error', error.toString());
+                    retry();
                 })
 
                 // progress handler
                 .on('progress', (progress) => {
                     if (!task.connected && Restreamer.data.states[task.streamType].type == 'connecting') {
-                        Restreamer.updateState(task.streamType, 'connected')
-                        task.connected = true
+                        Restreamer.updateState(task.streamType, 'connected');
+                        task.connected = true;
                     }
 
                     // compare the current number of frames
                     if (task.nFrames != progress.frames) {
-                        task.nFrames = progress.frames
+                        task.nFrames = progress.frames;
                         // add/reset a stale timeout if the number of frames changed
                         Restreamer.setTimeout(task.streamType, 'stale', () => {
-                            logger.warn('Stale connection', task.streamType)
-                            Restreamer.stopStream(task.streamType)
-                        }, config.ffmpeg.monitor.stale_wait)
+                            logger.warn('Stale connection', task.streamType);
+                            Restreamer.stopStream(task.streamType);
+                        }, config.ffmpeg.monitor.stale_wait);
                     }
 
-                    Restreamer.data.progresses[task.streamType] = progress
-                    Restreamer.updateProgressOnGui()
+                    Restreamer.data.progresses[task.streamType] = progress;
+                    Restreamer.updateProgressOnGui();
                 })
 
             command.run();
         }).catch((error) => {
             logger.error('Failed to spawn ffprobe: ' + error.toString(), task.streamType)
             if (Restreamer.data.userActions[task.streamType] == 'stop') {
-                Restreamer.updateState(task.streamType, 'disconnected')
-                logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
-                return
+                Restreamer.updateState(task.streamType, 'disconnected');
+                logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+                return;
             }
 
-            Restreamer.updateState(task.streamType, 'error', error.toString())
-            retry()
+            Restreamer.updateState(task.streamType, 'error', error.toString());
+            retry();
         })
     }
 
@@ -1454,8 +1454,8 @@ class Restreamer {
         const tots = this.data.timeouts
 
         if (!Object.prototype.hasOwnProperty.call(tots, target)) {
-            logger.error('Unknown target for timeout', streamType)
-            return
+            logger.error('Unknown target for timeout', streamType);
+            return;
         }
 
         if (!(streamType in tots[target])) {
@@ -1584,8 +1584,8 @@ class Restreamer {
     }
 
     static getPublicIp() {
-        logger.info('Retrieving public IP ...', 'publicIP')
-        this.data.publicIp = '127.0.0.1'
+        logger.info('Retrieving public IP ...', 'publicIP');
+        this.data.publicIp = '127.0.0.1';
 
         // publicIp().then(ip => {
         //     Restreamer.data.publicIp = ip
