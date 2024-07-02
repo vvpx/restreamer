@@ -1,4 +1,5 @@
 {
+  "type": "commonjs",
   "name": "restreamer",
   "version": "0.7.5",
   "description": "Allows you to do h.264 video streaming on your website without a streaming provider",

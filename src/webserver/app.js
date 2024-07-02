@@ -1,5 +1,10 @@
 "use strict";
 
+
+// node
+const path = require("node:path");
+const crypto = require("node:crypto");
+
 // express
 const express = require("express");
 const session = require("express-session");
@@ -8,13 +13,8 @@ const cookieParser = require("cookie-parser");
 // const bodyParser = require("body-parser")
 // const compression = require("compression")
 
-// other
-const path = require("path");
-const crypto = require("crypto");
-
 // modules
 const logger = require("../classes/Logger")("Webserver");
-
 const indexRouter = require("./controllers/index");
 const apiV1 = require("./controllers/api/v1");
 

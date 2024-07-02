@@ -1,8 +1,8 @@
 // @ts-check
 'use strict';
 
-const http = require('http');
-const { spawn } = require('child_process');
+const http = require('node:http');
+const { spawn } = require('node:child_process');
 const logger = require('./Logger')('NGINX');
 
 const { nginx: config } = globalThis.appConfig; // require('../../conf/live.json')
@@ -15,7 +15,7 @@ const timeout = 256;
  */
 function isRunning(cb) {
     http.get(ping_url, res => cb(res.statusCode === 200))
-        .on('error', () => cb(false))
+        .on('error', () => cb(false));
 }
 
 /**
@@ -49,27 +49,27 @@ class Nginxrtmp {
             this.process = spawn(config.command, config.args);
         }
 
-        this.process.stdout.on('data', data => logger.info(data))
+        this.process.stdout.on('data', data => logger.info(data));
 
-        this.process.stderr.on('data', data => logger.error(data, false))
+        this.process.stderr.on('data', data => logger.error(data, false));
 
         this.process.on('close', code => {
             abort = true;
             if (code && code > 0) {
-                logger.err?.(`Exited with code: ${code}`)
+                logger.err?.(`Exited with code: ${code}`);
                 if (this.allowRestart) {
                     const self = this;
                     setTimeout(() => {
-                        logger.info('Trying to restart ...')
-                        self.start(useSSL)
-                    }, 4 * timeout)
+                        logger.info('Trying to restart ...');
+                        self.start(useSSL);
+                    }, 4 * timeout);
                 }
             }
 
         })
 
         this.process.on('error', err => {
-            logger.error('Failed to spawn process: ' + err.name + ': ' + err.message)
+            logger.error('Failed to spawn process: ' + err.name + ': ' + err.message);
         })
 
         const foo = () => new Promise(r => setTimeout(isRunning, timeout, r));
@@ -78,19 +78,19 @@ class Nginxrtmp {
 
         if (running) {
             this.allowRestart = true;
-            logger.info('Successfully started')
+            logger.info('Successfully started');
         }
         else {
             this.process = null;
-            throw new Error('Failed to start')
+            throw new Error('Failed to start');
         }
 
-        return true
+        return true;
     }
 
     close() {
         this.allowRestart = false;
-        this.process?.kill()
+        this.process?.kill();
     }
 }
 

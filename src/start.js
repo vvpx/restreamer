@@ -28,7 +28,7 @@ const nginxrtmp = require('./classes/Nginxrtmp')();
 const app = require('./webserver/app');
 const Restreamer = require('./classes/Restreamer');
 
-require('child_process')
+require('node:child_process')
     .fork('./src/classes/RestreamerData.js')
     .on('close', code => {
         if (code) {
