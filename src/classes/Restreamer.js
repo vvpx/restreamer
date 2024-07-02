@@ -14,7 +14,7 @@ const { RaisingTimer: timer } = require('./Timers.js');
 const config = globalThis.appConfig;
 
 const RTL = "repeatToLocalNginx";
-const task_key = Symbol.for('task');
+// const task_key = Symbol.for('task');
 /**config.ffmpeg.probe.timeout_key */
 const { timeout_key: probe_tot_key, socket_timeout } = config.ffmpeg.probe;
 // const socket_timeout = config.ffmpeg.probe.socket_timeout
@@ -41,15 +41,12 @@ class Restreamer {
      * @returns {string}
      */
     static getRTMPStreamUrl() {
-        const nginx = config.nginx.streaming
-        const token = process.env.RS_TOKEN || config.auth.token
-        let path = `rtmp://${nginx.ip}:${nginx.rtmp_port}${nginx.rtmp_hls_path}/live.stream`
-
-        if (token != '') {
-            path += '?token=' + token
-        }
-
-        return path
+        const nginx = config.nginx.streaming;
+        const token = process.env.RS_TOKEN || config.auth.token;
+        let path = `rtmp://${nginx.ip}:${nginx.rtmp_port}${nginx.rtmp_hls_path}/live.stream`;
+        if (token != '')
+            path += '?token=' + token;
+        return path;
     }
 
     /**
@@ -57,54 +54,54 @@ class Restreamer {
      * @returns {string}
      */
     static getSnapshotPath() {
-        return path.join(global.__public, 'images', 'live.jpg')
+        return path.join(global.__public, 'images', 'live.jpg');
     }
 
     /**receive snapshot by using first frame of repeated video*/
     static fetchSnapshot() {
         if (Restreamer.data.states.repeatToLocalNginx.type != 'connected') {
-            logger.dbg?.('Disabled, because stream is not connected', 'snapshot')
-            return
+            logger.dbg?.('Disabled, because stream is not connected', 'snapshot');
+            return;
         }
 
         let interval = Restreamer.getSnapshotInterval()
         if (interval == 0) {
-            logger.info('Disabled', 'snapshot')
-            return
+            logger.info('Disabled', 'snapshot');
+            return;
         }
 
         const startTime = Date.now()
         const fetchSnapshot = function () {
-            let elapsed = Date.now() - startTime
+            let elapsed = Date.now() - startTime;
             if (elapsed <= interval) {
-                interval -= elapsed
+                interval -= elapsed;
             }
 
-            Restreamer.setTimeout(RTL, 'snapshot', Restreamer.fetchSnapshot, interval)
+            Restreamer.setTimeout(RTL, 'snapshot', Restreamer.fetchSnapshot, interval);
         }
 
         const command = FfmpegCommand('/tmp/hls/live.stream.m3u8') // FfmpegCommand(Restreamer.getRTMPStreamUrl())
         // command.output(Restreamer.getSnapshotPath())
 
-        Restreamer.addStreamOptions(command, 'global', null)
-        Restreamer.addStreamOptions(command, 'snapshot', null)
+        Restreamer.addStreamOptions(command, 'global', null);
+        Restreamer.addStreamOptions(command, 'snapshot', null);
 
         command.on('start', commandLine => {
-            logger.dbg?.('Spawned: ' + commandLine, 'snapshot')
+            logger.dbg?.('Spawned: ' + commandLine, 'snapshot');
         })
 
         command.on('error', error => {
-            logger.error(error.toString().trim(), 'snapshot')
-            fetchSnapshot()
+            logger.error(error.toString().trim(), 'snapshot');
+            fetchSnapshot();
         })
 
         command.on('end', () => {
-            logger.inf?.('Updated. Next scheduled update in ' + interval + ' ms.', 'snapshot')
-            wsCtrl.emit('snapshot', null)
-            fetchSnapshot()
+            logger.inf?.('Updated. Next scheduled update in ' + interval + ' ms.', 'snapshot');
+            wsCtrl.emit('snapshot', null);
+            fetchSnapshot();
         })
 
-        command.save(Restreamer.getSnapshotPath())
+        command.save(Restreamer.getSnapshotPath());
     }
 
     /**
@@ -116,23 +113,23 @@ class Restreamer {
      */
     static addStreamOptions(command, name, replace) {
         if (!Object.prototype.hasOwnProperty.call(config.ffmpeg.options, name)) {
-            logger.dbg?.('Unknown option: ' + name)
-            return
+            logger.dbg?.('Unknown option: ' + name);
+            return;
         }
 
-        logger.dbg?.('Adding option: ' + name)
+        logger.dbg?.('Adding option: ' + name);
 
-        const options = config.ffmpeg.options[name]
+        const options = config.ffmpeg.options[name];
 
         const replacer = function (options, replace) {
-            if (!replace) return options
+            if (!replace) return options;
 
             const f = /**@param {String} option*/ option => {
                 let o = option;
                 for (const r in replace) {
                     const sub = `{${r}}`;
                     if (o.includes(sub)) {
-                        logger.dbg?.(`Replacing ${sub} with "${replace[r]}" in: ${o}`)
+                        logger.dbg?.(`Replacing ${sub} with "${replace[r]}" in: ${o}`);
                         o = o.replace(sub, replace[r]);
                     }
                 }
@@ -143,15 +140,15 @@ class Restreamer {
         }
 
         if ('input' in options) {
-            command.input(replacer(options.input, replace))
+            command.input(replacer(options.input, replace));
         }
 
         if ('inputOptions' in options) {
-            command.inputOptions(replacer(options.inputOptions, replace))
+            command.inputOptions(replacer(options.inputOptions, replace));
         }
 
         if ('outputOptions' in options) {
-            command.outputOptions(replacer(options.outputOptions, replace))
+            command.outputOptions(replacer(options.outputOptions, replace));
         }
     }
 
@@ -232,24 +229,24 @@ class Restreamer {
         let state = this.getState(RTL);
         const repeatToLocalNginxReconnecting = ['connected', 'connecting', 'error'].includes(state);
 
-        state = this.getState('repeatToOptionalOutput')
+        state = this.getState('repeatToOptionalOutput');
         const repeatToOptionalOutputReconnecting = ['connected', 'connecting'].includes(state);
         const adr = this.data.addresses;
 
         // check if a stream was repeated locally
         if (repeatToLocalNginxReconnecting && adr.srcAddress) {
-            this.startStreamAsync(new StrimingTask(adr.srcAddress, RTL), true)
+            this.startStreamAsync(new StrimingTask(adr.srcAddress, RTL), true);
         }
         else {
-            this.updateState(RTL, 'disconnected')
+            this.updateState(RTL, 'disconnected');
         }
 
         // check if the stream was repeated to an output address
         if (repeatToOptionalOutputReconnecting && adr.optionalOutputAddress) {
-            this.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true)
+            this.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true);
         }
         else {
-            this.updateState('repeatToOptionalOutput', 'disconnected')
+            this.updateState('repeatToOptionalOutput', 'disconnected');
         }
     }
 
@@ -816,21 +813,20 @@ class Restreamer {
      * @return {string} name of the new state
      */
     static updateState(streamType, state, message = '') {
-        const previousState = this.setState(streamType, state, message)
+        const previousState = this.setState(streamType, state, message);
 
-        if (previousState === state) {
-            return state
-        }
+        if (previousState === state)
+            return state;
 
-        // logger.dbg?.('Update state from "' + previousState + '" to "' + state + '"', streamType)
+        // logger.dbg?.('Update state from "' + previousState + '" to "' + state + '"', streamType);
 
         if (streamType === RTL && state === 'connected') {
-            this.fetchSnapshot()
+            this.fetchSnapshot();
         }
 
         // this.writeToDB()
-        this.updateStreamDataOnGui()
-        return state
+        this.updateStreamDataOnGui();
+        return state;
     }
 
     /**
@@ -839,18 +835,17 @@ class Restreamer {
      * @param {string | undefined} message
      */
     static setState(streamType, state, message) {
-        const previousState = this.data.states[streamType].type
+        const previousState = this.data.states[streamType].type;
 
-        if (typeof message != 'string') {
-            message = ''
-        }
+        if (typeof message != 'string')
+            message = '';
 
         this.data.states[streamType] = {
             'type': state,
             'message': message
-        }
+        };
 
-        return previousState
+        return previousState;
     }
 
     /**
@@ -859,7 +854,7 @@ class Restreamer {
      * @return {string} name of the new state
      */
     static getState(streamType) {
-        return Restreamer.data.states[streamType].type
+        return Restreamer.data.states[streamType].type;
     }
 
     /**
@@ -929,36 +924,35 @@ class Restreamer {
 
         if (task.streamType === RTL) {
             // repeat to local nginx server
-            this.addStreamOptions(command, 'global', null)
-            this.addStreamOptions(command, 'video', null)
-            this.addStreamOptions(command, 'local_mpegts', null) //rtmp
+            this.addStreamOptions(command, 'global', null);
+            this.addStreamOptions(command, 'video', null);
+            this.addStreamOptions(command, 'local_mpegts', null); //rtmp
 
             // RTSP options
             if (task.streamUrl.startsWith('rtsp')) {
-                this.addStreamOptions(command, 'rtsp', null)
+                this.addStreamOptions(command, 'rtsp', null);
 
-                if (this.data.options.rtspTcp) {
-                    this.addStreamOptions(command, 'rtsp-tcp', null)
-                }
+                if (this.data.options.rtspTcp)
+                    this.addStreamOptions(command, 'rtsp-tcp', null);
             }
 
             // add outputs to the ffmpeg stream
-            command.output("/tmp/hls/live.stream.m3u8") //command.output(rtmpUrl)
+            command.output("/tmp/hls/live.stream.m3u8"); //command.output(rtmpUrl)
         }
         else {
-            // repeat to optional output
-            this.addStreamOptions(command, 'global', null)
-            this.addStreamOptions(command, 'video', null)
+            // repeat to optional output - not used cuurently
+            this.addStreamOptions(command, 'global', null);
+            this.addStreamOptions(command, 'video', null);
 
             if (this.data.options.output.type == 'hls') {
-                this.addStreamOptions(command, 'hls', this.data.options.output.hls)
+                this.addStreamOptions(command, 'hls', this.data.options.output.hls);
             }
             else {
-                this.addStreamOptions(command, 'rtmp', null)
+                this.addStreamOptions(command, 'rtmp', null);
             }
 
             // add outputs to the ffmpeg stream
-            command.output(task.streamUrl)
+            command.output(task.streamUrl);
         }
 
         return command;
@@ -973,7 +967,7 @@ class Restreamer {
 
         const testUserAction = () => {
             if (this.data.userActions[task.streamType] === 'stop') {
-                this.updateState(task.streamType, 'disconnected')
+                this.updateState(task.streamType, 'disconnected');
                 logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
                 return true;
             }
@@ -1075,24 +1069,21 @@ class Restreamer {
             gop: parseInt(this.data.options.video.fps) * 2,
             profile: this.data.options.video.profile,
             tune: this.data.options.video.tune
-        }
+        };
 
-        for (let vo of options.video) {
-            this.addStreamOptions(command, vo, replace_video)
-        }
+        for (let vo of options.video)
+            this.addStreamOptions(command, vo, replace_video);
 
         const replace_audio = {
             audioid: this.data.options.audio.id,
             bitrate: this.data.options.audio.bitrate,
             channels: this.data.options.audio.channels,
             sampling: this.data.options.audio.sampling
-        }
+        };
 
-        for (let ao of options.audio) {
-            this.addStreamOptions(command, ao, replace_audio)
-        }
+        for (let ao of options.audio)
+            this.addStreamOptions(command, ao, replace_audio);
 
-        // command[task_key] = task;
         command
             .on('start', commandLine => {
                 task.reset();
@@ -1109,8 +1100,6 @@ class Restreamer {
             .on('end', () => {
                 task.reset();
                 this.data.processes[task.streamType] = null;
-                // this.setTimeout(task.streamType, 'retry', null)
-                // this.setTimeout(task.streamType, 'stale', null)
                 this.data.progresses[task.streamType].currentFps = 0;
                 this.data.progresses[task.streamType].currentKbps = 0;
 
@@ -1127,8 +1116,6 @@ class Restreamer {
             .on('error', error => {
                 task.reset();
                 this.data.processes[task.streamType] = null;
-                // this.setTimeout(task.streamType, 'retry', null)
-                // this.setTimeout(task.streamType, 'stale', null)
                 this.data.progresses[task.streamType].currentFps = 0;
                 this.data.progresses[task.streamType].currentKbps = 0;
 
@@ -1138,9 +1125,9 @@ class Restreamer {
                     return;
                 }
 
-                logger.error(error.message, task.streamType)
-                this.updateState(task.streamType, 'error', error.message)
-                this.retry(task)
+                logger.error(error.message, task.streamType);
+                this.updateState(task.streamType, 'error', error.message);
+                this.retry(task);
             })
             .once('stderr', () => {
                 logger.dbg?.('connected', task.streamType);
@@ -1193,8 +1180,8 @@ class Restreamer {
         //     Restreamer.updateProgressOnGui()
         // })
 
-        this.data.progresses[task.streamType].frames = 0
-        command.run()
+        this.data.progresses[task.streamType].frames = 0;
+        command.run();
     }
 
     /**
@@ -1480,9 +1467,9 @@ class Restreamer {
      */
     static setTimeoutUnsafe(streamType, target, func, delay) {
         // logger.dev?.(`setTimeoutUnsafe(${target})`)
-        const tots = this.data.timeouts
-        clearTimeout(tots[target][streamType])
-        if (func) tots[target][streamType] = setTimeout(func, delay)
+        const tots = this.data.timeouts;
+        clearTimeout(tots[target][streamType]);
+        if (func) tots[target][streamType] = setTimeout(func, delay);
     }
 
     /**bind websocket events on application start*/
@@ -1493,10 +1480,10 @@ class Restreamer {
 
             socket.on('startStream', options => {
                 // logger.dbg?.('Got "startStream" event', options.streamType)
-                this.updateUserAction(options.streamType, 'start')
-                this.updateOptions(options.options)
+                this.updateUserAction(options.streamType, 'start');
+                this.updateOptions(options.options);
 
-                let streamUrl = ''
+                let streamUrl = '';
                 if (options.streamType == RTL) {
                     this.data.addresses.srcAddress = options.src;
                     streamUrl = options.src;
@@ -1520,12 +1507,12 @@ class Restreamer {
 
             socket.on('checkStates', () => {
                 // logger.dbg?.('Got "checkStates" event')
-                this.updateStreamDataOnGui()
+                this.updateStreamDataOnGui();
             })
 
             socket.on('playerOptions', player => {
                 // logger.dbg?.('Got "playerOptions" event')
-                this.updatePlayerOptions(player)
+                this.updatePlayerOptions(player);
             })
 
             // socket.on('disconnect', (reason) => logger.inf?.('disconnect: ' + reason))
@@ -1543,7 +1530,7 @@ class Restreamer {
             'options': this.data.options,
             'userActions': this.data.userActions,
             'states': this.data.states
-        }
+        };
     }
 
     /**
@@ -1556,11 +1543,11 @@ class Restreamer {
             'options': this.data.options,
             'userActions': this.data.userActions,
             'states': this.data.states
-        }
+        };
     }
 
     static checkForUpdates() {
-        logger.info('Update checking disabled, skip...')
+        logger.info('Update checking disabled, skip...');
 
         // const url = {'host': 'datarhei.com', 'path': '/apps.json'}
         // logger.dbg?.('Checking for updates...', 'checkForUpdates')
@@ -1586,25 +1573,14 @@ class Restreamer {
     static getPublicIp() {
         logger.info('Retrieving public IP ...', 'publicIP');
         this.data.publicIp = '127.0.0.1';
-
-        // publicIp().then(ip => {
-        //     Restreamer.data.publicIp = ip
-        //     logger.info('Found public IP: ' + ip, 'publicIP')
-        // }).catch(err => {
-        //     logger.warn('Failed to get public IP', 'publicIP')
-        //     Restreamer.data.publicIp = '127.0.0.1'
-        // })
     }
 
     static close() {
         /**@type {FfmpegCommand.FfmpegCommand}*/ let cmd = this.data.processes.repeatToLocalNginx;
         if (cmd?.ffmpegProc) {
-            rtl_task?.reset(); // cmd[task_key].reset();
-            cmd.removeAllListeners('error')
-            cmd.on('error', () => { }).kill()
-            // /**@type {ChildProcess}*/
-            // let ff = cmd.ffmpegProc
-            // ff.stdin.write('q\n')
+            rtl_task?.reset();
+            cmd.removeAllListeners('error');
+            cmd.on('error', () => { }).kill();
         }
     }
 }
