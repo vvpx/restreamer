@@ -32,8 +32,8 @@ require('node:child_process')
     .fork('./src/classes/RestreamerData.js')
     .on('close', code => {
         if (code) {
-            logger.inf?.(`RestreamerData exit code:${code}`)
-            return
+            logger.inf?.(`RestreamerData exit code:${code}`);
+            return;
         }
 
         app.startWebserver(Restreamer.data)
@@ -42,23 +42,23 @@ require('node:child_process')
                 return nginxrtmp.start(process.env.RS_HTTPS === "true");
             })
             .then(() => {
-                return Restreamer.restoreProcesses()
+                return Restreamer.restoreProcesses();
             })
             .catch(error => {
-                logger.err?.('Error starting webserver and nginx for application: ' + error)
-                logger.err?.(`${error.stack}`)
+                logger.err?.('Error starting webserver and nginx for application: ' + error);
+                logger.err?.(`${error.stack}`);
             })
     })
     .on('error', error => {
-        logger.err?.(error.message)
+        logger.err?.(error.message);
     })
 
 process.on('SIGTERM', () => {
     logger.info('receive SIGTERM signal')
-    nginxrtmp.close()
-    Restreamer.close()
+    Restreamer.close();
+    nginxrtmp.close();
     app.server?.close((err) => {
         if (err) return logger.error(err.message, err.name);
         logger.stdout('MAIN', 'app closed succefully');
-    })
+    });
 })
