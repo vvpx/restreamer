@@ -60,8 +60,8 @@ class RestreamerExpressApp {
 
     /**add automatic parsers for the body*/
     addParsers() {
-        this.app.use(express.json()) // bodyParser.json())
-        this.app.use(cookieParser())
+        this.app.use(express.json()); // bodyParser.json())
+        this.app.use(cookieParser());
     }
 
     /**add content compression on responses*/
@@ -76,12 +76,12 @@ class RestreamerExpressApp {
 
     /**beautify json response*/
     beautifyJSONResponse() {
-        this.app.set("json spaces", 4)
+        this.app.set("json spaces", 4);
     }
 
     /**add the restreamer routes*/
     addRoutes() {
-        indexRouter(this.app)
+        indexRouter(this.app);
         // this.app.use("/v1", this.v1.router)
     }
 
@@ -122,15 +122,15 @@ class RestreamerExpressApp {
                     }
                 )
             } else {
-                return accept(null, false)
+                return accept(null, false);
             }
         }
 
         this.app.get("io").use(function (socket, next) {
             val(socket.request, function (err, authorized) {
-                if (err) return next(new Error(err))
-                if (!authorized) return next(new Error("Not authorized"))
-                next()
+                if (err) return next(new Error(err));
+                if (!authorized) return next(new Error("Not authorized"));
+                next();
             })
         })
     }
@@ -140,41 +140,41 @@ class RestreamerExpressApp {
      * @returns {promise}
      */
     startWebserver(dataSrc) {
-        logger.info("Starting ...")
-        this.app.set("port", process.env.RS_NODEJS_PORT)
+        logger.info("Starting WebServer...");
+        this.app.set("port", process.env.RS_NODEJS_PORT);
         // this.v1.setSrcData(dataSrc)
         this.app.use("/v1", new apiV1(dataSrc).router)
 
         return new Promise(resolve => {
             const server = this.server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
-                this.app.set("io", new Server(server, { path: "/socket.io" }))
-                this.secureSockets()
-                this.app.set("server", server.address())
-                logger.inf?.("Running on port " + process.env.RS_NODEJS_PORT)
-                resolve()
+                this.app.set("io", new Server(server, { path: "/socket.io" }));
+                this.secureSockets();
+                this.app.set("server", server.address());
+                logger.inf?.("Running on port " + process.env.RS_NODEJS_PORT);
+                resolve();
             });
-        })
+        });
     }
 
     /**stuff that have always to be added to the webapp*/
     initAlways() {
-        this.useSessions()
-        this.addParsers()
-        this.addCompression()
-        // this.addExpressLogger()
-        this.beautifyJSONResponse()
-        // this.createPromiseForWebsockets()
-        this.addRoutes()
+        this.useSessions();
+        this.addParsers();
+        this.addCompression();
+        // this.addExpressLogger();
+        this.beautifyJSONResponse();
+        // this.createPromiseForWebsockets();
+        this.addRoutes();
     }
 
     /**prod config for the express app*/
     initProd() {
-        logger.debug("Init webserver with PROD environment")
-        this.initAlways()
+        logger.debug("Init webserver with PROD environment");
+        this.initAlways();
         this.app.disable('x-powered-by');
         this.app.get("/", (_req, res) => {
             res.sendFile(path.join(global.__public, "index.prod.html"))
-        })
+        });
 
         // Internal error handling exist in express
         // this.add404ErrorHandling()
@@ -183,11 +183,11 @@ class RestreamerExpressApp {
 
     /**dev config for the express app*/
     initDev() {
-        logger.debug("Init webserver with DEV environment")
-        this.initAlways()
+        logger.debug("Init webserver with DEV environment");
+        this.initAlways();
         this.app.get("/", (req, res) => {
-            res.sendFile(path.join(global.__public, "index.dev.html"))
-        })
+            res.sendFile(path.join(global.__public, "index.dev.html"));
+        });
 
         // this.add404ErrorHandling()
         // this.add500ErrorHandling()
