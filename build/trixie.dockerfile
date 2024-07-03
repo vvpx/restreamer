@@ -107,7 +107,7 @@ RUN --mount=type=tmpfs,target=/build\
 COPY package.json package-lock.json /app/
 RUN cd /app\
     && npm config set update-notifier false\
-    && npm install --omit=dev --no-fund\
+    && npm install --omit=dev --no-fund --no-audit\
     && npm cache clean --force\
     && rm -rf ${SRC}/lib/node_modules
 
