@@ -38,9 +38,9 @@ class RestreamerExpressApp {
         this.server;
 
         if (process.env.RS_NODEJS_ENV === "dev") {
-            this.initDev()
+            this.initDev();
         } else {
-            this.initProd()
+            this.initProd();
         }
     }
 
@@ -55,7 +55,7 @@ class RestreamerExpressApp {
                 unset: "destroy",
                 store: this.sessionStore
             })
-        )
+        );
     }
 
     /**add automatic parsers for the body*/
@@ -142,8 +142,8 @@ class RestreamerExpressApp {
     startWebserver(dataSrc) {
         logger.info("Starting WebServer...");
         this.app.set("port", process.env.RS_NODEJS_PORT);
-        // this.v1.setSrcData(dataSrc)
-        this.app.use("/v1", new apiV1(dataSrc).router)
+        // this.v1.setSrcData(dataSrc);
+        this.app.use("/v1", new apiV1(dataSrc).router);
 
         return new Promise(resolve => {
             const server = this.server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
@@ -173,7 +173,7 @@ class RestreamerExpressApp {
         this.initAlways();
         this.app.disable('x-powered-by');
         this.app.get("/", (_req, res) => {
-            res.sendFile(path.join(global.__public, "index.prod.html"))
+            res.sendFile(path.join(global.__public, "index.prod.html"));
         });
 
         // Internal error handling exist in express
