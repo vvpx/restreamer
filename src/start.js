@@ -13,10 +13,9 @@ env.init(config);
 
 const logger = require('./classes/Logger')('Start');
 logger.info('Restreamer v' + version, false);
-logger.info('========', false);
+logger.info('============', false);
 // list environment variables
 logger.info('ENVIRONMENTS', false);
-logger.info('========', false);
 env.list(logger);
 if (env.hasErrors()) process.exit();
 logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`);
@@ -29,7 +28,7 @@ const app = require('./webserver/app');
 const Restreamer = require('./classes/Restreamer');
 
 require('node:child_process')
-    .fork('./src/classes/RestreamerData.js')
+    .fork(join(__dirname, './classes/RestreamerData.js'))
     .on('close', code => {
         if (code) {
             logger.inf?.(`RestreamerData exit code:${code}`);
@@ -54,10 +53,10 @@ require('node:child_process')
     })
 
 process.on('SIGTERM', () => {
-    logger.info('receive SIGTERM signal')
+    logger.info('Receive SIGTERM signal');
     Restreamer.close();
     nginxrtmp.close();
-    app.server?.close((err) => {
+    app.server?.close(err => {
         if (err) return logger.error(err.message, err.name);
         logger.stdout('MAIN', 'app closed succefully');
     });
