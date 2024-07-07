@@ -1,5 +1,5 @@
 // @ts-check
-'use strict'
+'use strict';
 
 /**
  * Define data structure for Restreamer.data
@@ -18,7 +18,7 @@ function RsData() {
         snapshot: {
             repeatToLocalNginx: null
         }
-    }
+    };
 
     this.options = {
         rtspTcp: false,
@@ -60,7 +60,7 @@ function RsData() {
                 timeout: '10'
             }
         }
-    }
+    };
 
     this.states = {
         repeatToLocalNginx: {
@@ -71,17 +71,17 @@ function RsData() {
             type: 'disconnected',
             message: ''
         }
-    }
+    };
 
     this.userActions = {
         repeatToLocalNginx: 'start',
         repeatToOptionalOutput: 'start'
-    }
+    };
 
     this.processes = {
         repeatToLocalNginx: null,
         repeatToOptionalOutput: null
-    }
+    };
 
     this.progresses = {
         repeatToLocalNginx: {
@@ -90,7 +90,7 @@ function RsData() {
             currentKbps: 0
         },
         repeatToOptionalOutput: {}
-    }
+    };
 
     this.addresses = {
         srcAddress: '',
@@ -99,10 +99,10 @@ function RsData() {
             audio: {},
             video: {}
         }
-    }
+    };
 
-    this.updateAvailable = false
-    this.publicIp = '127.0.0.1'
+    this.updateAvailable = false;
+    this.publicIp = '127.0.0.1';
 }
 
 module.exports = RsData;

@@ -80,7 +80,7 @@ class Restreamer {
             Restreamer.setTimeout(RTL, 'snapshot', Restreamer.fetchSnapshot, interval);
         }
 
-        const command = FfmpegCommand('/tmp/hls/live.stream.m3u8') // FfmpegCommand(Restreamer.getRTMPStreamUrl())
+        const command = FfmpegCommand('/tmp/hls/live.stream.m3u8'); // FfmpegCommand(Restreamer.getRTMPStreamUrl())
         // command.output(Restreamer.getSnapshotPath())
 
         Restreamer.addStreamOptions(command, 'global', null);
@@ -134,7 +134,7 @@ class Restreamer {
                     }
                 }
                 return o;
-            }
+            };
 
             return (options instanceof Array) ? options.map(e => f(e)) : f(options);
         }
@@ -181,7 +181,7 @@ class Restreamer {
             }
         }
         else {
-            logger.warn('Invalid value for interval. Using default.', 'snapshot')
+            logger.warn('Invalid value for interval. Using default.', 'snapshot');
         }
 
         if (interval == 0) {
@@ -253,23 +253,23 @@ class Restreamer {
     /**write JSON file for persistence*/
     static writeToDB() {
         // let db = new JsonDB(new Config(config.jsondb, true, false))
-        db.push('/', Restreamer.dataForJsonDb())
+        db.push('/', this.dataForJsonDb());
     }
 
     /**write player config to public directory*/
     static writeToPlayerConfig() {
         const data = 'var playerConfig = ' + JSON.stringify(this.data.options.player);
-        fs.writeFileSync('src/webserver/public/config.js', data, 'utf8')
+        fs.writeFileSync('src/webserver/public/config.js', data, 'utf8');
     }
 
     /**send websocket event to GUI to update the state of the streams*/
     static updateStreamDataOnGui() {
-        wsCtrl.emit('updateStreamData', this.extractDataOfStreams())
+        wsCtrl.emit('updateStreamData', this.extractDataOfStreams());
     }
 
     /**send websocket event to GUI to update the state of the streams*/
     static updateProgressOnGui() {
-        wsCtrl.emitOnConnections()?.('updateProgress', this.data.progresses)
+        wsCtrl.emitOnConnections()?.('updateProgress', this.data.progresses);
     }
 
     /**
@@ -297,16 +297,16 @@ class Restreamer {
         ];
 
         if (streamUrl.startsWith('rtsp') && this.data.options.rtspTcp === true) {
-            probeArgs.push('-rtsp_transport', 'tcp')
-            probeArgs.push(probe_tot_key, socket_timeout)
+            probeArgs.push('-rtsp_transport', 'tcp');
+            probeArgs.push(probe_tot_key, socket_timeout);
         }
 
-        probeArgs.push(streamUrl)
+        probeArgs.push(streamUrl);
 
         execFile('ffprobe', probeArgs, { timeout: config.ffmpeg.probe.timeout, killSignal: 'SIGTERM' }, (err, stdout, stderr) => {
             if (err) {
                 if (!err.code && err.killed) {
-                    return deferred.reject("ffprobe timeout")
+                    return deferred.reject("ffprobe timeout");
                 }
 
                 let line = '';
@@ -348,7 +348,7 @@ class Restreamer {
             }
 
             if (video === null) {
-                return deferred.reject("no video stream detected")
+                return deferred.reject("no video stream detected");
             }
 
             this.data.options.video.id = video.index;
@@ -364,102 +364,102 @@ class Restreamer {
 
             if (streamType === RTL) {
                 if (this.data.options.video.codec == 'h264') {
-                    options.video.push('video_codec_h264')
+                    options.video.push('video_codec_h264');
 
                     if (this.data.options.video.profile != 'auto') {
-                        options.video.push('video_codec_h264_profile')
+                        options.video.push('video_codec_h264_profile');
                     }
 
                     if (this.data.options.video.tune != 'none') {
-                        options.video.push('video_codec_h264_tune')
+                        options.video.push('video_codec_h264_tune');
                     }
                 }
                 else {
                     if (video.codec_name != 'h264') {
-                        return deferred.reject("video stream must be h264, found " + video.codec_name)
+                        return deferred.reject("video stream must be h264, found " + video.codec_name);
                     }
 
-                    options.video.push('video_codec_copy')
+                    options.video.push('video_codec_copy');
                 }
 
                 if (audio !== null) {
                     if (this.data.options.audio.codec === 'none') {
-                        options.audio.push('audio_codec_none')
+                        options.audio.push('audio_codec_none');
                     }
                     else if (this.data.options.audio.codec === 'aac' || this.data.options.audio.codec === 'mp3') {
                         if (this.data.options.audio.preset === 'encode') {
-                            options.audio.push('audio_preset_copy')
+                            options.audio.push('audio_preset_copy');
                         }
 
                         if (this.data.options.audio.codec === 'aac') {
-                            options.audio.push('audio_codec_aac')
+                            options.audio.push('audio_codec_aac');
                         }
                         else {
-                            options.audio.push('audio_codec_mp3')
+                            options.audio.push('audio_codec_mp3');
                         }
 
                         options.audio.push('audio_preset_' + this.data.options.audio.preset);
 
                         if (this.data.options.audio.channels !== 'inherit' && this.data.options.audio.sampling !== 'inherit') {
-                            options.audio.push('audio_filter_all')
+                            options.audio.push('audio_filter_all');
                         }
                         else if (this.data.options.audio.channels != 'inherit') {
-                            options.audio.push('audio_filter_channels')
+                            options.audio.push('audio_filter_channels');
                         }
                         else if (this.data.options.audio.sampling != 'inherit') {
-                            options.audio.push('audio_filter_sampling')
+                            options.audio.push('audio_filter_sampling');
                         }
                     }
                     else if (this.data.options.audio.codec === 'auto') {
-                        options.audio.push('audio_preset_copy')
+                        options.audio.push('audio_preset_copy');
 
                         if (audio.codec_name == 'aac') {
-                            options.audio.push('audio_codec_copy_aac')
+                            options.audio.push('audio_codec_copy_aac');
                         } else if (audio.codec_name == 'mp3') {
-                            options.audio.push('audio_codec_copy')
+                            options.audio.push('audio_codec_copy');
                         } else {
-                            options.audio.push('audio_codec_aac')
-                            options.audio.push('audio_preset_encode')
+                            options.audio.push('audio_codec_aac');
+                            options.audio.push('audio_preset_encode');
                         }
                     }
                     else {
-                        options.audio.push('audio_preset_copy')
+                        options.audio.push('audio_preset_copy');
 
                         switch (audio.codec_name) {  // consider all allowed audio codecs for FLV
                             case 'mp3':
                             case 'pcm_alaw':
                             case 'pcm_mulaw':
-                                options.audio.push('audio_codec_copy')
-                                break
+                                options.audio.push('audio_codec_copy');
+                                break;
 
                             case 'aac':
-                                options.audio.push('audio_codec_copy_aac')
-                                break
+                                options.audio.push('audio_codec_copy_aac');
+                                break;
 
                             default:
                                 if (this.data.options.audio.codec === 'copy') {
-                                    return deferred.reject("can't copy audio stream, found unsupported codec " + audio.codec_name)
+                                    return deferred.reject("can't copy audio stream, found unsupported codec " + audio.codec_name);
                                 }
                                 else {
-                                    options.audio.push('audio_codec_aac')
-                                    options.audio.push('audio_preset_encode')
+                                    options.audio.push('audio_codec_aac');
+                                    options.audio.push('audio_preset_encode');
                                 }
                         }
                     }
                 }
                 else {
                     if (this.data.options.audio.codec === 'aac' || this.data.options.audio.codec === 'auto') {
-                        options.audio.push('audio_codec_aac')
-                        options.audio.push('audio_preset_silence')
-                        options.audio.push('audio_filter_all')
+                        options.audio.push('audio_codec_aac');
+                        options.audio.push('audio_preset_silence');
+                        options.audio.push('audio_filter_all');
                     }
                     else if (this.data.options.audio.codec === 'mp3') {
                         options.audio.push('audio_codec_mp3');
-                        options.audio.push('audio_preset_silence')
-                        options.audio.push('audio_filter_all')
+                        options.audio.push('audio_preset_silence');
+                        options.audio.push('audio_filter_all');
                     }
                     else {
-                        options.audio.push('audio_codec_none')
+                        options.audio.push('audio_codec_none');
                     }
                 }
             }
@@ -467,17 +467,17 @@ class Restreamer {
                 options.video.push('video_codec_copy');
 
                 if (audio !== null) {
-                    options.audio.push('audio_preset_copy')
+                    options.audio.push('audio_preset_copy');
 
                     if (audio.codec_name == 'aac') {
-                        options.audio.push('audio_codec_copy_aac')
+                        options.audio.push('audio_codec_copy_aac');
                     }
                     else {
-                        options.audio.push('audio_codec_copy')
+                        options.audio.push('audio_codec_copy');
                     }
                 }
                 else {
-                    options.audio.push('audio_codec_none')
+                    options.audio.push('audio_codec_none');
                 }
             }
 
@@ -502,7 +502,7 @@ class Restreamer {
                     };
                 }
 
-                this.writeToDB()
+                this.writeToDB();
             }
 
             return deferred.resolve(options);
@@ -863,7 +863,7 @@ class Restreamer {
      * @return {string} name of the user action
      */
     static getUserAction(streamType) {
-        return Restreamer.data.userActions[streamType]
+        return Restreamer.data.userActions[streamType];
     }
 
     /**
@@ -873,9 +873,9 @@ class Restreamer {
      * @return {string} name of the previous user action
      */
     static setUserAction(streamType, action) {
-        const previousAction = this.data.userActions[streamType]
-        this.data.userActions[streamType] = action
-        return previousAction
+        const previousAction = this.data.userActions[streamType];
+        this.data.userActions[streamType] = action;
+        return previousAction;
     }
 
     /**
@@ -885,15 +885,15 @@ class Restreamer {
      * @return {string} name of the new user action
      */
     static updateUserAction(streamType, action) {
-        let previousAction = this.setUserAction(streamType, action)
+        let previousAction = this.setUserAction(streamType, action);
 
-        if (previousAction === action) return action
+        if (previousAction === action) return action;
 
-        logger.dbg?.('Set user action from "' + previousAction + '" to "' + action + '"', streamType)
+        logger.dbg?.('Set user action from "' + previousAction + '" to "' + action + '"', streamType);
 
-        this.writeToDB()
-        this.updateStreamDataOnGui()
-        return action
+        this.writeToDB();
+        this.updateStreamDataOnGui();
+        return action;
     }
 
     static updatePlayerOptions(player) {
@@ -1438,7 +1438,7 @@ class Restreamer {
      * @return {void}
      */
     static setTimeout(streamType, target, func, delay = undefined) {
-        const tots = this.data.timeouts
+        const tots = this.data.timeouts;
 
         if (!Object.prototype.hasOwnProperty.call(tots, target)) {
             logger.error('Unknown target for timeout', streamType);
@@ -1450,7 +1450,7 @@ class Restreamer {
             return;
         }
 
-        clearTimeout(tots[target][streamType])
+        clearTimeout(tots[target][streamType]);
 
         if (typeof func == 'function') {
             tots[target][streamType] = setTimeout(func, delay);
@@ -1488,7 +1488,7 @@ class Restreamer {
                     this.data.addresses.srcAddress = options.src;
                     streamUrl = options.src;
                 }
-                else if (options.streamType == 'repeatToOptionalOutput') {
+                else if (options.streamType === 'repeatToOptionalOutput') {
                     this.data.addresses.optionalOutputAddress = options.optionalOutput;
                     streamUrl = options.optionalOutput;
                 }
@@ -1585,7 +1585,7 @@ class Restreamer {
     }
 }
 
-const RsData = require("./RsData.js");
+const RsData = require("./RsData");
 Restreamer.data = new RsData;
 
 /**
@@ -1627,7 +1627,7 @@ function StrimingTask(streamUrl, streamType) {
         this.restart_wait = defaultWait;
 
         if (this.intervalId) {
-            logger.dbg?.(`clear stale interval`, this.streamType);
+            logger.dbg?.(`Clear stale interval`, this.streamType);
             clearInterval(this.intervalId);
             this.intervalId = undefined;
         }

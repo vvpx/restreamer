@@ -233,8 +233,8 @@ if (require.main === module) {
     RestreamerData.checkJSONDb()
         .then(() => { })
         .catch(e => {
-            logger.err?.(e)
-            process.exit(-1)
+            logger.err?.(e);
+            process.exit(-1);
         })
 }
 

@@ -37,7 +37,7 @@ class Nginxrtmp {
      * @param {boolean} useSSL
      */
     async start(useSSL) {
-        logger.info('Starting...')
+        logger.info('Starting nginx...');
         let running = false;
         let abort = false;
 
@@ -60,7 +60,7 @@ class Nginxrtmp {
                 if (this.allowRestart) {
                     const self = this;
                     setTimeout(() => {
-                        logger.info('Trying to restart ...');
+                        logger.info('Trying to restart...');
                         self.start(useSSL);
                     }, 4 * timeout);
                 }
@@ -70,7 +70,7 @@ class Nginxrtmp {
 
         this.process.on('error', err => {
             logger.error('Failed to spawn process: ' + err.name + ': ' + err.message);
-        })
+        });
 
         const foo = () => new Promise(r => setTimeout(isRunning, timeout, r));
 
