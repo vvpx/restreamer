@@ -1,12 +1,12 @@
 diff -wa -u orig/capabilities.js ./capabilities.js
---- orig/capabilities.js	2023-02-15 00:41:35.615000000 +0700
-+++ ./capabilities.js	2023-12-16 18:42:30.154594600 +0700
+--- orig/capabilities.js	2024-07-09 13:06:48.844760158 +0700
++++ ./capabilities.js	2024-07-09 13:49:10.978825482 +0700
 @@ -19,7 +19,7 @@
  var lineBreakRegexp = /\r\n|\r|\n/;
  var filterRegexp = /^(?: [T\.][S\.][C\.] )?([^ ]+) +(AA?|VV?|\|)->(AA?|VV?|\|) +(.*)$/;
  
 -var cache = {};
-+const cache = fs.existsSync('./cache.json') ? require('./cache.json') : {};
++const cache = require('./cache.json');
  
  module.exports = function(proto) {
    /**
@@ -39,13 +39,32 @@ diff -wa -u orig/capabilities.js ./capabilities.js
  
        callback(null, cache.filters = data);
      });
-Only in .: ff.json
-Only in .: options
-Only in .: orig
-Only in .: presets
+Только в .: options
+Только в .: orig
+Только в .: presets
 diff -wa -u orig/processor.js ./processor.js
---- orig/processor.js	2023-12-12 20:02:27.516739600 +0700
-+++ ./processor.js	2023-12-13 23:13:47.853198800 +0700
+--- orig/processor.js	2024-07-09 13:06:48.856760343 +0700
++++ ./processor.js	2024-07-09 16:35:37.124179728 +0700
+@@ -1,13 +1,13 @@
+ /*jshint node:true*/
+ 'use strict';
+ 
+-var spawn = require('child_process').spawn;
+-var path = require('path');
+-var fs = require('fs');
+-var async = require('async');
+-var utils = require('./utils');
++const { spawn }  = require('child_process');
++// var path = require('path');
++// var fs = require('fs');
++const async = require('async');
++const utils = require('./utils');
+ 
+-var nlRegexp = /\r\n|\r|\n/g;
++// var nlRegexp = /\r\n|\r|\n/g;
+ 
+ /*
+  *! Processor methods
 @@ -126,7 +126,7 @@
        processCB = function() {};
      }
@@ -77,10 +96,18 @@ diff -wa -u orig/processor.js ./processor.js
        // Read metadata as soon as 'progress' listeners are added
  
        if (this.listeners('progress').length > 0) {
-Only in .: update
 diff -wa -u orig/utils.js ./utils.js
---- orig/utils.js	2023-12-12 20:10:25.666584700 +0700
-+++ ./utils.js	2023-12-16 09:52:01.209909900 +0700
+--- orig/utils.js	2024-07-09 13:06:48.860760406 +0700
++++ ./utils.js	2024-07-09 14:43:20.139924367 +0700
+@@ -1,7 +1,7 @@
+ /*jshint node:true*/
+ 'use strict';
+ 
+-var exec = require('child_process').exec;
++// var exec = require('child_process').exec;
+ var isWindows = require('os').platform().match(/win(32|64)/);
+ var which = require('which');
+ 
 @@ -377,14 +377,17 @@
     * @param {Numebr} maxLines maximum number of lines to store (<= 0 for unlimited)
     */
@@ -93,7 +120,7 @@ diff -wa -u orig/utils.js ./utils.js
 +    const cbs = [];
 +    /**@type {Array.<string>} */ let lines = [];
 +    let current = '';
-+    let closed = false
++    let closed = false;
 +    const max = maxLines - 1;
 +    // (() => console.log(`linesRing: ${max}`))();
  
