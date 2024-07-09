@@ -20,8 +20,8 @@ const { timeout_key: probe_tot_key, socket_timeout } = config.ffmpeg.probe;
 // const socket_timeout = config.ffmpeg.probe.socket_timeout
 const db = new JsonDB(new Config(config.jsondb, true, false));
 
-FfmpegCommand.setFfmpegPath('/usr/local/bin/ffmpeg');
-FfmpegCommand.setFfprobePath('/usr/local/bin/ffprobe');
+// FfmpegCommand.setFfmpegPath('/usr/local/bin/ffmpeg');
+// FfmpegCommand.setFfprobePath('/usr/local/bin/ffprobe');
 
 
 // function timeout(ms) {
