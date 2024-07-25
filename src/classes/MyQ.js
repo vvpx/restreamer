@@ -12,7 +12,7 @@ class Qdefer {
         this.promise = new Promise((resolve, reject) => {
             this.#resolve = resolve;
             this.#reject = reject;
-        })
+        });
     }
 
     reject(reason) {
@@ -32,4 +32,4 @@ class Qdefer {
     // get promise() { return this.#resolution_promise }
 }
 
-module.exports.defer = () => new Qdefer;
+module.exports.defer = () => new Qdefer();
