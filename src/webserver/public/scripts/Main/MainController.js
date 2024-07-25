@@ -167,14 +167,11 @@ window.angular.module('Main').controller('mainController',
             });
         };
 
-        /**
-         * Configure Websockets
-         */
-
-        ws.emit('checkStates'); // check states of hls and rtmp stream
 
         // prohibit double binding of events
         if (!setup) {
+            setup = true;
+
             /*
              * test websockets connection (should print below message to browser console if it works)
              */
@@ -193,6 +190,11 @@ window.angular.module('Main').controller('mainController',
             });
             ws.on('snapshot', updateSnapshot);
         }
+
+        /**
+         * Configure Websockets
+         */
+        ws.emit('checkStates'); // check states of hls and rtmp stream
 
         $scope.startStream = (streamType) => {
             const inputRegex = /^(rtmp(s|t)?|rtsp|https?):\/\//;

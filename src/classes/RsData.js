@@ -56,7 +56,7 @@ function RsData() {
             hls: {
                 method: 'POST',
                 time: '2',
-                listSize: '10',
+                listSize: '6',
                 timeout: '10'
             }
         }
