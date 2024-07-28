@@ -8,8 +8,9 @@
 
 const ctx = 'wsControl';
 var logger = require('./Logger')(ctx);
+var app = require("../webserver/app").app;
 /**@type {Server} */
-var io = require("../webserver/app").app.get('io');
+var io;
 let connections = 0;
 
 /**
@@ -39,12 +40,13 @@ class WebsocketsController {
      * @param {(arg: Socket) => void} callback
      */
     static setConnectCallback(callback) {
+        io ??= app.get('io');
         io.on('connection', socket => {
             ++connections;
             logger.inf?.(`Connection from ${socket.handshake.headers['x-forwarded-for']}`);
             socket.once("disconnect", (reason) => logger.inf?.(`${socket.handshake?.headers['x-forwarded-for']} disconnected: ${reason} *${--connections}`));
             callback(socket);
-        })
+        });
     }
 }
 
