@@ -11,7 +11,7 @@ const config = globalThis.appConfig = require('../conf/live.json');
 const env = require('./classes/EnvVar');
 env.init(config);
 
-const logger = require('./classes/Logger')('Start');
+var logger = require('./classes/Logger')('Start');
 logger.info('Restreamer v' + version, false);
 logger.info('============', false);
 // list environment variables

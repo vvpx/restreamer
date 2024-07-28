@@ -30,7 +30,7 @@ class WebsocketsController {
      * @returns {((event: string, data: object) => void) | null}
      */
     static emitOnConnections() {
-        return connections ? this.emit : null;
+        return connections > 0 ? this.emit : null;
     }
 
     /**

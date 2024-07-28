@@ -117,7 +117,7 @@ class RestreamerExpressApp {
                     ),
                     (err, s) => {
                         if (!err && s && s.authenticated) {
-                            return accept(null, true)
+                            return accept(null, true);
                         }
                     }
                 )
@@ -194,5 +194,4 @@ class RestreamerExpressApp {
     }
 }
 
-const restreamerApp = new RestreamerExpressApp;
-module.exports = restreamerApp;
+module.exports = new RestreamerExpressApp();
