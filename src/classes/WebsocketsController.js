@@ -7,8 +7,9 @@
 */
 
 const ctx = 'wsControl';
-const logger = require('./Logger')(ctx);
-const app = require("../webserver/app").app;
+var logger = require('./Logger')(ctx);
+/**@type {Server} */
+var io = require("../webserver/app").app.get('io');
 let connections = 0;
 
 /**
@@ -23,7 +24,7 @@ class WebsocketsController {
      * @param {object} data data to emit to the client event listener
      */
     static emit(event, data) {
-        app.get('io').sockets.emit(event, data);
+        io.sockets.emit(event, data);
     }
 
     /**
@@ -38,8 +39,6 @@ class WebsocketsController {
      * @param {(arg: Socket) => void} callback
      */
     static setConnectCallback(callback) {
-        /**@type {Server} */
-        const io = app.get('io');
         io.on('connection', socket => {
             ++connections;
             logger.inf?.(`Connection from ${socket.handshake.headers['x-forwarded-for']}`);
