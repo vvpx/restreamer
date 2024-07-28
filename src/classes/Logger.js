@@ -31,8 +31,8 @@ class Logger {
      * @returns {string}
      */
     format(type, message, context = this.context) {
-        const time = new Date().toISOString().slice(0, 19);
-        return `[${time}] [${type.padEnd(5)}] [${context ? context.padStart(20) : ''}] ${message}\n`;
+        // const time = new Date().toISOString().slice(0, 19);
+        return `[${new Date().toISOString().slice(0, 19)}] [${type.padEnd(5)}] [${context ? context.padStart(20) : ''}] ${message}\n`;
     }
 
     /**
@@ -42,7 +42,7 @@ class Logger {
      * @param {string} [context]
      */
     stdout(type, message, context) {
-        process.stdout.write(this.format(type, message, context))
+        process.stdout.write(this.format(type, message, context));
     }
 
     info(msg, ctx) { }
@@ -81,7 +81,7 @@ let logFile = -1;
         try {
             logFile = fs.openSync('./src/webserver/public/debug/' + identifier + '.log', 'a');
             process.on("exit", () => fs.close(logFile));
-            console.log('Enabled logging to ' + identifier);
+            console.log('Enabled logging to', identifier);
         } catch (err) {
             console.error(`${err}`);
         }
@@ -97,18 +97,19 @@ let logFile = -1;
              * @param {string} ctx
              * @param {string} type
              */
-            function (type, msg, ctx) {
+            function file (type, msg, ctx) {
                 const str = this.format(type, msg, ctx);
                 process.stdout.write(str);
                 fs.appendFile(logFile, str, 'utf8', (err) => { !err && fs.fsync(logFile, () => { }); });
             };
     }
 
+    let t = type => stdout ?
+        `process.stdout.write(this.format('${type}', ...arguments));` :
+        `this.file('${type}', ...arguments);`;
+    
     for (let e of x)
-        if (LOG_LEVEL >= e.level)
-            proto[e.name] = stdout ?
-                function () { process.stdout.write(this.format(e.type, ...arguments)) } :
-                function () { this.file(e.type, ...arguments) };
+        if (LOG_LEVEL >= e.level) proto[e.name] = new Function(t(e.type));
 })();
 
 module.exports = context => new Logger(context);
