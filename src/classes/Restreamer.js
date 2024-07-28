@@ -70,7 +70,7 @@ class Restreamer {
             return;
         }
 
-        const startTime = Date.now()
+        const startTime = Date.now();
         const fetchSnapshot = function () {
             let elapsed = Date.now() - startTime;
             if (elapsed <= interval) {
@@ -78,7 +78,7 @@ class Restreamer {
             }
 
             Restreamer.setTimeout(RTL, 'snapshot', Restreamer.fetchSnapshot, interval);
-        }
+        };
 
         const command = FfmpegCommand('/tmp/hls/live.stream.m3u8'); // FfmpegCommand(Restreamer.getRTMPStreamUrl())
         // command.output(Restreamer.getSnapshotPath())
@@ -126,7 +126,7 @@ class Restreamer {
 
             const f = /**@param {String} option*/ option => {
                 let o = option;
-                for (const r in replace) {
+                for (let r in replace) {
                     const sub = `{${r}}`;
                     if (o.includes(sub)) {
                         logger.dbg?.(`Replacing ${sub} with "${replace[r]}" in: ${o}`);
@@ -184,10 +184,7 @@ class Restreamer {
             logger.warn('Invalid value for interval. Using default.', 'snapshot');
         }
 
-        if (interval == 0) {
-            return 0;   // disable snapshots
-        }
-        else if (interval < minimalInterval) {
+        if (interval > 0 && interval < minimalInterval) {
             interval = minimalInterval;
         }
 
@@ -1634,7 +1631,7 @@ function StrimingTask(streamUrl, streamType) {
         if (this.waitTimer) {
             this.waitTimer = null;
         }
-    }
+    };
 
     this.beginStaleDetection = () => {
         this.intervalId = setInterval(() => {
@@ -1646,7 +1643,7 @@ function StrimingTask(streamUrl, streamType) {
             }
             this.prevnFrame = this.nFrames;
         }, config.ffmpeg.monitor.stale_wait).unref();
-    }
+    };
 
     /**
      * @returns {Promise<boolean>}
@@ -1654,7 +1651,7 @@ function StrimingTask(streamUrl, streamType) {
     this.waitReconnectPeriod = () => {
         if (!this.waitTimer) this.waitTimer = new timer(this.restart_wait, 90);
         return this.waitTimer.wait();
-    }
+    };
 
     this.cancellWait = () => {
         if (this.waitTimer) {
@@ -1662,7 +1659,7 @@ function StrimingTask(streamUrl, streamType) {
             this.waitTimer.cancell();
             this.waitTimer = null;
         }
-    }
+    };
 
     this.reset();
 }

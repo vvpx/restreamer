@@ -77,4 +77,4 @@ if (require.main === module) {
     Test().then((result) => console.log(result));
 }
 
-module.exports = { Timer, RaisingTimer }
+module.exports = { Timer, RaisingTimer };
