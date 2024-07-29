@@ -12,10 +12,10 @@ const env = require('./classes/EnvVar');
 env.init(config);
 
 var logger = require('./classes/Logger')('Start');
-logger.info('Restreamer v' + version, false);
-logger.info('============', false);
+logger.info('Restreamer v' + version);
+logger.info('============');
 // list environment variables
-logger.info('ENVIRONMENTS', false);
+logger.info('ENVIRONMENTS');
 env.list(logger);
 if (env.hasErrors()) process.exit();
 logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`);

@@ -17,7 +17,7 @@ class Logger {
      * @param {string} context context of the log message (classname.methodname)
      */
     constructor(context) {
-        this.context = context;
+        this.context = context ?? '';
         this.err = LOG_LEVEL >= LEVEL_ERROR ? this.error : null;
         this.wrn = LOG_LEVEL >= LEVEL_WARN ? this.warn : null;
         this.inf = LOG_LEVEL >= LEVEL_INFO ? this.info : null;
@@ -27,12 +27,12 @@ class Logger {
     /**
      * @param {string} type 
      * @param {string} message 
-     * @param {string} context 
+     * @param {string?} context 
      * @returns {string}
      */
-    format(type, message, context = this.context) {
+    format(type, message, context) {
         // const time = new Date().toISOString().slice(0, 19);
-        return `[${new Date().toISOString().slice(0, 19)}] [${type.padEnd(5)}] [${context ? context.padStart(20) : ''}] ${message}\n`;
+        return `[${new Date().toISOString().slice(0, 19)}] [${type.padEnd(5)}] [${context ?? this.context}] ${message}\n`;
     }
 
     /**
