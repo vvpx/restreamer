@@ -16,7 +16,7 @@ class EnvVar {
         this.messages.push({
             level: level,
             message: message
-        })
+        });
     }
 
     init(config) {
@@ -38,35 +38,34 @@ class EnvVar {
             // apply the default value. In case the environment variable is required and
             // not set, stop the process.
             if (envVar.name in process.env) {
+                let value = process.env[envVar.name];
                 // Adjust the given value to the required type
                 switch (envVar.type) {
                     case 'int':
-                        process.env[envVar.name] = parseInt(process.env[envVar.name], 10);
+                        process.env[envVar.name] = parseInt(value, 10);
                         break;
 
                     case 'bool':
-                        process.env[envVar.name] = process.env[envVar.name] == 'true';
+                        process.env[envVar.name] = value == 'true';
                         break;
 
-                    default: // keep strings
+                    default:
                         break;
                 }
 
                 // Cover blacklisted values
-                let value = process.env[envVar.name];
-                if (logBlacklist.indexOf(envVar.name) != -1) {
+                if (logBlacklist.includes(envVar.name))
                     value = '******';
-                }
 
-                this.log(envVar.name + ' = ' + value + ' - ' + envVar.description, 'info')
+                this.log(`${envVar.name} = ${value} - ${envVar.description}`, 'info');
             }
             else {
                 if (envVar.required == true) {
-                    this.log(envVar.name + ' not set, but required', 'error')
+                    this.log(envVar.name + ' not set, but required', 'error');
                     this.errors = true;
                 }
                 else {
-                    this.log(envVar.name + ' = ' + envVar.defaultValue + ' (using default) - ' + envVar.description, 'info')
+                    this.log(envVar.name + ' = ' + envVar.defaultValue + ' (using default) - ' + envVar.description, 'info');
                     process.env[envVar.name] = envVar.defaultValue;
                 }
             }
@@ -74,6 +73,7 @@ class EnvVar {
     }
 
     list(logger) {
+        logger.info('ENVIRONMENTS', 'ENV');
         for (let i = 0; i < this.messages.length; i++) {
             let m = this.messages[i];
 
@@ -108,4 +108,4 @@ class EnvVar {
     // }
 }
 
-module.exports = new EnvVar;
+module.exports = EnvVar;

@@ -8,18 +8,19 @@ globalThis.__src = __dirname;
 globalThis.__base = join(__dirname, '..');
 globalThis.__public = join(__dirname, 'webserver/public');
 const config = globalThis.appConfig = require('../conf/live.json');
-const env = require('./classes/EnvVar');
-env.init(config);
-
 var logger = require('./classes/Logger')('Start');
 logger.info('Restreamer v' + version);
 logger.info('============');
-// list environment variables
-logger.info('ENVIRONMENTS');
-env.list(logger);
-if (env.hasErrors()) process.exit();
-logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`);
-if (process.env.RS_DEBUG?.toLowerCase() === "true") {
+
+{
+    let env = new (require('./classes/EnvVar'))();
+    env.init(config);
+    env.list(logger);
+    if (env.hasErrors()) process.exit();
+    logger.debug(`Unload EnvVar: ${delete require.cache[require.resolve('./classes/EnvVar')]}`);
+}
+
+if (process.env.RS_DEBUG?.toString() === "true") {
     logger.info('Debugging enabled. Check the /debug path in the web interface.');
 }
 
