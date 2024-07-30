@@ -94,8 +94,9 @@ class RestreamerData {
                 const validateResult = v.validate(dbdata, schema);
 
                 if (validateResult.errors.length > 0) {
-                    logger.debug(`Validation error of ${dbFile}: ${JSON.stringify(validateResult.errors)}`);
-                    throw new Error(JSON.stringify(validateResult.errors));
+                    let errors = JSON.stringify(validateResult.errors);
+                    logger.dbg?.(`Validation error of ${dbFile}: ${errors}`);
+                    throw new Error(errors);
                 } else {
                     // Fill up optional fields if not present
                     if (!('video' in dbdata.options)) {
@@ -225,7 +226,7 @@ class RestreamerData {
                 if (!fs.existsSync(dbPath)) fs.mkdirSync(dbPath);
                 fs.writeFileSync(path.join(dbPath, dbFile), JSON.stringify(defaultStructure));
                 resolve();
-            })
+            });
     }
 }
 
