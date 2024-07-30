@@ -243,9 +243,7 @@
         },
         {
             "name": "RS_LOGLEVEL",
-            "alias": [
-                "LOGGER_LEVEL"
-            ],
+            "alias": [],
             "type": "int",
             "defaultValue": "3",
             "required": false,
@@ -253,9 +251,7 @@
         },
         {
             "name": "RS_TIMEZONE",
-            "alias": [
-                "TIMEZONE"
-            ],
+            "alias": [],
             "type": "string",
             "defaultValue": "Asia/Novokuznetsk",
             "required": false,
@@ -263,10 +259,7 @@
         },
         {
             "name": "RS_SNAPSHOT_INTERVAL",
-            "alias": [
-                "SNAPSHOT_REFRESH_INTERVAL",
-                "RS_SNAPSHOT_REFRESH_INTERVAL"
-            ],
+            "alias": [],
             "type": "string",
             "defaultValue": "0",
             "required": false,
@@ -274,9 +267,7 @@
         },
         {
             "name": "RS_USERNAME",
-            "alias": [
-                "RESTREAMER_USERNAME"
-            ],
+            "alias": [],
             "type": "string",
             "defaultValue": "admin",
             "required": false,
@@ -288,7 +279,7 @@
                 "RESTREAMER_PASSWORD"
             ],
             "type": "string",
-            "defaultValue": "datarhei",
+            "defaultValue": "admin",
             "required": false,
             "description": "Password for the backend."
         },
