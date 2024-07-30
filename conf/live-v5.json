@@ -288,7 +288,7 @@
             "name": "RS_PASSWORD",
             "alias": [],
             "type": "string",
-            "defaultValue": "datarhei",
+            "defaultValue": "admin",
             "required": false,
             "description": "Password for the backend."
         },
