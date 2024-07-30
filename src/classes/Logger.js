@@ -6,7 +6,7 @@ const LEVEL_ERROR = 1;
 const LEVEL_WARN = 2;
 const LEVEL_INFO = 3;
 const LEVEL_DEBUG = 4;
-const DEBUG = ((env = 'false') => env.toLowerCase() === 'true')(process.env.RS_DEBUG);
+const DEBUG = ((env) => env === true || env === 'true')(process.env.RS_DEBUG ?? false);
 const LOG_LEVEL = DEBUG ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || `${LEVEL_INFO}`);
 
 
