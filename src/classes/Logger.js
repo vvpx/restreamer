@@ -27,11 +27,10 @@ class Logger {
     /**
      * @param {string} type 
      * @param {string} message 
-     * @param {string?} context 
+     * @param {string} [context]
      * @returns {string}
      */
     format(type, message, context) {
-        // const time = new Date().toISOString().slice(0, 19);
         return `[${new Date().toISOString().slice(0, 19)}] [${type.padEnd(5)}] [${context ?? this.context}] ${message}\n`;
     }
 
@@ -51,18 +50,6 @@ class Logger {
     error(msg, ctx) { }
 }
 
-// /**
-//  * 
-//  * @param {Function} f
-//  * @param {string} type
-//  * @returns {Function}
-//  */
-// function wrap(f, type) {
-//     return function (msg, ctx) {
-//         this.file(msg, ctx, type);
-//         f.apply(msg, ctx);
-//     }
-// }
 
 let logFile = -1;
 (function () {
@@ -82,32 +69,21 @@ let logFile = -1;
             logFile = fs.openSync('./src/webserver/public/debug/' + identifier + '.log', 'a');
             process.on("exit", () => fs.close(logFile));
             console.log('Enabled logging to', identifier);
+            proto.file = function file() {
+                const str = this.format(...arguments);
+                process.stdout.write(str);
+                fs.appendFile(logFile, str, 'utf8', (err) => { !err && fs.fsync(logFile, () => { }); });
+            };
+            stdout = false;
         } catch (err) {
             console.error(`${err}`);
         }
     }
 
-    if (DEBUG && logFile >= 0) {
-        stdout = false;
-
-        proto.file =
-            /**
-             * print a message to a file
-             * @param {string} msg
-             * @param {string} ctx
-             * @param {string} type
-             */
-            function file (type, msg, ctx) {
-                const str = this.format(type, msg, ctx);
-                process.stdout.write(str);
-                fs.appendFile(logFile, str, 'utf8', (err) => { !err && fs.fsync(logFile, () => { }); });
-            };
-    }
-
     let t = type => stdout ?
         `process.stdout.write(this.format('${type}', ...arguments));` :
         `this.file('${type}', ...arguments);`;
-    
+
     for (let e of x)
         if (LOG_LEVEL >= e.level) proto[e.name] = new Function(t(e.type));
 })();
