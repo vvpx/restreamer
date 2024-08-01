@@ -44,7 +44,7 @@ diff -wa -u orig/capabilities.js ./capabilities.js
 Только в .: presets
 diff -wa -u orig/processor.js ./processor.js
 --- orig/processor.js	2024-07-09 13:06:48.856760343 +0700
-+++ ./processor.js	2024-07-09 16:35:37.124179728 +0700
++++ ./processor.js	2024-08-01 18:29:22.774485872 +0700
 @@ -1,13 +1,13 @@
  /*jshint node:true*/
  'use strict';
@@ -96,9 +96,52 @@ diff -wa -u orig/processor.js ./processor.js
        // Read metadata as soon as 'progress' listeners are added
  
        if (this.listeners('progress').length > 0) {
+@@ -419,18 +419,14 @@
+     function emitEnd(err, stdout, stderr) {
+       if (!ended) {
+         ended = true;
+-
+-        if (err) {
+-          self.emit('error', err, stdout, stderr);
+-        } else {
+-          self.emit('end', stdout, stderr);
+-        }
++        err ? self.emit('error', err, stdout, stderr) : self.emit('end', stdout, stderr);
+       }
+     }
+ 
+     self._prepare(function(err, args) {
+       if (err) {
+-        return emitEnd(err);
++        emitEnd(err);
++        return;
+       }
+ 
+       // Run ffmpeg
+@@ -507,9 +503,7 @@
+ 
+             // 'stderr' event
+             if (self.listeners('stderr').length) {
+-              stderrRing.callback(function(line) {
+-                self.emit('stderr', line);
+-              });
++              stderrRing.callback((line) => { self.emit('stderr', line); });
+             }
+ 
+             // 'codecData' event
+@@ -551,7 +545,8 @@
+             if (flvmeta.length) {
+               self._getFlvtoolPath(function(err, flvtool) {
+                 if (err) {
+-                  return emitEnd(err);
++                  emitEnd(err);
++                  return;
+                 }
+ 
+                 async.each(
 diff -wa -u orig/utils.js ./utils.js
 --- orig/utils.js	2024-07-09 13:06:48.860760406 +0700
-+++ ./utils.js	2024-07-09 14:43:20.139924367 +0700
++++ ./utils.js	2024-08-01 18:20:02.115097450 +0700
 @@ -1,7 +1,7 @@
  /*jshint node:true*/
  'use strict';
