@@ -2,7 +2,7 @@
 
 
 // node
-const path = require("node:path");
+const { join } = require("node:path");
 const crypto = require("node:crypto");
 
 // express
@@ -173,7 +173,7 @@ class RestreamerExpressApp {
         this.initAlways();
         this.app.disable('x-powered-by');
         this.app.get("/", (_req, res) => {
-            res.sendFile(path.join(global.__public, "index.prod.html"));
+            res.sendFile(join(global.__public, "index.prod.html"));
         });
 
         // Internal error handling exist in express
@@ -186,7 +186,7 @@ class RestreamerExpressApp {
         logger.debug("Init webserver with DEV environment");
         this.initAlways();
         this.app.get("/", (req, res) => {
-            res.sendFile(path.join(global.__public, "index.dev.html"));
+            res.sendFile(join(global.__public, "index.dev.html"));
         });
 
         // this.add404ErrorHandling()
