@@ -39,12 +39,35 @@ diff -wa -u orig/capabilities.js ./capabilities.js
  
        callback(null, cache.filters = data);
      });
+diff -wa -u orig/fluent-ffmpeg.js ./fluent-ffmpeg.js
+--- orig/fluent-ffmpeg.js	2024-07-09 13:06:48.856760343 +0700
++++ ./fluent-ffmpeg.js	2024-08-02 18:18:48.405327600 +0700
+@@ -57,7 +57,7 @@
+ 
+   // Create argument lists
+   var self = this;
+-  ['_global', '_complexFilters'].forEach(function(prop) {
++  ['_global', '_complexFilters'].forEach((prop) => {
+     self[prop] = utils.args();
+   });
+ 
+@@ -179,9 +179,7 @@
+ 
+ require('./capabilities')(FfmpegCommand.prototype);
+ 
+-FfmpegCommand.setFfmpegPath = function(path) {
+-  (new FfmpegCommand()).setFfmpegPath(path);
+-};
++FfmpegCommand.setFfmpegPath = (path) => FfmpegCommand.prototype.setFfmpegPath(path);
+ 
+ FfmpegCommand.setFfprobePath = function(path) {
+   (new FfmpegCommand()).setFfprobePath(path);
 Только в .: options
 Только в .: orig
 Только в .: presets
 diff -wa -u orig/processor.js ./processor.js
 --- orig/processor.js	2024-07-09 13:06:48.856760343 +0700
-+++ ./processor.js	2024-08-01 18:29:22.774485872 +0700
++++ ./processor.js	2024-08-02 19:23:04.152930351 +0700
 @@ -1,13 +1,13 @@
  /*jshint node:true*/
  'use strict';
@@ -54,7 +77,7 @@ diff -wa -u orig/processor.js ./processor.js
 -var fs = require('fs');
 -var async = require('async');
 -var utils = require('./utils');
-+const { spawn }  = require('child_process');
++const { spawn } = require('child_process');
 +// var path = require('path');
 +// var fs = require('fs');
 +const async = require('async');
@@ -74,7 +97,7 @@ diff -wa -u orig/processor.js ./processor.js
  
      // Find ffmpeg
      this._getFfmpegPath(function(err, command) {
-@@ -151,9 +151,9 @@
+@@ -151,13 +151,11 @@
        // Spawn process
        var ffmpegProc = spawn(command, args, options);
  
@@ -85,9 +108,44 @@ diff -wa -u orig/processor.js ./processor.js
 +      //   ffmpegProc.stderr.setEncoding('utf8');
 +      // }
  
-       ffmpegProc.on('error', function(err) {
-         endCB(err);
-@@ -365,7 +365,7 @@
+-      ffmpegProc.on('error', function(err) {
+-        endCB(err);
+-      });
++      ffmpegProc.on('error', (err) => endCB(err));
+ 
+       // Ensure we wait for captured streams to end before calling endCB
+       var exitError = null;
+@@ -187,11 +185,9 @@
+ 
+       // Capture stdout if specified
+       if (options.captureStdout) {
+-        ffmpegProc.stdout.on('data', function(data) {
+-          stdoutRing.append(data);
+-        });
+-
+-        ffmpegProc.stdout.on('close', function() {
++        ffmpegProc.stdout
++          .on('data', (data) => stdoutRing.append(data))
++          .on('close', () => {
+           stdoutRing.close();
+           stdoutClosed = true;
+           handleExit();
+@@ -199,11 +195,9 @@
+       }
+ 
+       // Capture stderr if specified
+-      ffmpegProc.stderr.on('data', function(data) {
+-        stderrRing.append(data);
+-      });
+-
+-      ffmpegProc.stderr.on('close', function() {
++      ffmpegProc.stderr
++        .on('data', (data) => stderrRing.append(data))
++        .on('close', () => {
+         stderrRing.close();
+         stderrClosed = true;
+         handleExit();
+@@ -365,7 +359,7 @@
        }
      ], callback);
  
@@ -96,7 +154,7 @@ diff -wa -u orig/processor.js ./processor.js
        // Read metadata as soon as 'progress' listeners are added
  
        if (this.listeners('progress').length > 0) {
-@@ -419,18 +419,14 @@
+@@ -419,18 +413,14 @@
      function emitEnd(err, stdout, stderr) {
        if (!ended) {
          ended = true;
@@ -106,39 +164,55 @@ diff -wa -u orig/processor.js ./processor.js
 -        } else {
 -          self.emit('end', stdout, stderr);
 -        }
-+        err ? self.emit('error', err, stdout, stderr) : self.emit('end', stdout, stderr);
++          err ? self.emit('error', err, stdout, stderr) : self.emit('end', stdout, stderr);
        }
      }
  
      self._prepare(function(err, args) {
        if (err) {
 -        return emitEnd(err);
-+        emitEnd(err);
-+        return;
++          emitEnd(err);
++          return;
        }
  
        // Run ffmpeg
-@@ -507,9 +503,7 @@
+@@ -507,9 +497,7 @@
  
              // 'stderr' event
              if (self.listeners('stderr').length) {
 -              stderrRing.callback(function(line) {
 -                self.emit('stderr', line);
 -              });
-+              stderrRing.callback((line) => { self.emit('stderr', line); });
++                stderrRing.callback((line) => { self.emit('stderr', line); });
              }
  
              // 'codecData' event
-@@ -551,7 +545,8 @@
+@@ -551,7 +539,8 @@
              if (flvmeta.length) {
                self._getFlvtoolPath(function(err, flvtool) {
                  if (err) {
 -                  return emitEnd(err);
-+                  emitEnd(err);
-+                  return;
++                    emitEnd(err);
++                    return;
                  }
  
                  async.each(
+diff -wa -u orig/recipes.js ./recipes.js
+--- orig/recipes.js	2024-07-09 13:06:48.856760343 +0700
++++ ./recipes.js	2024-08-02 18:17:22.105843718 +0700
+@@ -54,9 +54,9 @@
+     }
+ 
+     if (!stream) {
+-      if (process.version.match(/v0\.8\./)) {
+-        throw new Error('PassThrough stream is not supported on node v0.8');
+-      }
++      // if (process.version.match(/v0\.8\./)) {
++      //   throw new Error('PassThrough stream is not supported on node v0.8');
++      // }
+ 
+       stream = new PassThrough();
+     }
 diff -wa -u orig/utils.js ./utils.js
 --- orig/utils.js	2024-07-09 13:06:48.860760406 +0700
 +++ ./utils.js	2024-08-01 18:20:02.115097450 +0700
