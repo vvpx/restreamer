@@ -80,28 +80,25 @@ class Restreamer {
             Restreamer.setTimeout(RTL, 'snapshot', Restreamer.fetchSnapshot, interval);
         };
 
-        const command = FfmpegCommand('/tmp/hls/live.stream.m3u8'); // FfmpegCommand(Restreamer.getRTMPStreamUrl())
+        const command = new FfmpegCommand('/tmp/hls/live.stream.m3u8'); // FfmpegCommand(Restreamer.getRTMPStreamUrl())
         // command.output(Restreamer.getSnapshotPath())
 
         Restreamer.addStreamOptions(command, 'global', null);
         Restreamer.addStreamOptions(command, 'snapshot', null);
-
-        command.on('start', commandLine => {
-            logger.dbg?.('Spawned: ' + commandLine, 'snapshot');
-        })
-
-        command.on('error', error => {
-            logger.error(error.toString().trim(), 'snapshot');
-            fetchSnapshot();
-        })
-
-        command.on('end', () => {
-            logger.inf?.('Updated. Next scheduled update in ' + interval + ' ms.', 'snapshot');
-            wsCtrl.emit('snapshot', null);
-            fetchSnapshot();
-        })
-
-        command.save(Restreamer.getSnapshotPath());
+        command
+            .on('start', commandLine => {
+                logger.dbg?.('Spawned: ' + commandLine, 'snapshot');
+            })
+            .on('error', error => {
+                logger.error(error.toString().trim(), 'snapshot');
+                fetchSnapshot();
+            })
+            .on('end', () => {
+                logger.inf?.('Updated. Next scheduled update in ' + interval + ' ms.', 'snapshot');
+                wsCtrl.emit('snapshot', null);
+                fetchSnapshot();
+            })
+            .save(Restreamer.getSnapshotPath());
     }
 
     /**
@@ -899,7 +896,7 @@ class Restreamer {
     */
     static buildCommand(task) {
         const rtmpUrl = this.getRTMPStreamUrl();
-        const command = FfmpegCommand(task.streamType == RTL ? task.streamUrl : rtmpUrl, {
+        const command = new FfmpegCommand(task.streamType == RTL ? task.streamUrl : rtmpUrl, {
             stdoutLines: 1
         });
 
@@ -1188,14 +1185,13 @@ class Restreamer {
         logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
 
         this.setTimeout(task.streamType, 'retry', () => {
-            logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
-
             if (this.data.userActions[task.streamType] === 'stop') {
                 logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
                 this.updateState(task.streamType, 'disconnected');
                 return;
             }
 
+            logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
             this.startStreamAsync(task);
         }, task.restart_wait);
     }
