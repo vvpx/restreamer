@@ -1,5 +1,8 @@
 'use strict';
 
+const config = globalThis.appConfig;
+const RTL = "repeatToLocalNginx";
+
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
@@ -7,17 +10,11 @@ const { execFile } = require('node:child_process');
 const FfmpegCommand = require('fluent-ffmpeg');
 const { JsonDB, Config } = require('node-json-db');
 const logger = require('./Logger')('Restreamer');
-
-// const Q = require('./MyQ.js');
 const wsCtrl = require('./WebsocketsController');
 const { RaisingTimer: timer } = require('./Timers.js');
-const config = globalThis.appConfig;
-
-const RTL = "repeatToLocalNginx";
 // const task_key = Symbol.for('task');
-/**config.ffmpeg.probe.timeout_key */
+
 const { timeout_key: probe_tot_key, socket_timeout } = config.ffmpeg.probe;
-// const socket_timeout = config.ffmpeg.probe.socket_timeout
 const db = new JsonDB(new Config(config.jsondb, true, false));
 
 // FfmpegCommand.setFfmpegPath('/usr/local/bin/ffmpeg');
@@ -214,29 +211,26 @@ class Restreamer {
      */
     static async restoreProcesses() {
         // let db = new JsonDB(new Config(config.jsondb, true, false))
-        this.data.addresses = await db.getData('/addresses');
+        const adr = this.data.addresses = await db.getData('/addresses');
         this.data.states = await db.getData('/states');
         this.data.options = await db.getData('/options');
         this.data.userActions = await db.getData('/userActions');
         this.writeToPlayerConfig();
 
-        let state = this.getState(RTL);
-        const repeatToLocalNginxReconnecting = ['connected', 'connecting', 'error'].includes(state);
-
-        state = this.getState('repeatToOptionalOutput');
-        const repeatToOptionalOutputReconnecting = ['connected', 'connecting'].includes(state);
-        const adr = this.data.addresses;
-
         // check if a stream was repeated locally
-        if (repeatToLocalNginxReconnecting && adr.srcAddress) {
+        const rtlReconnect = ['connected', 'connecting', 'error'].includes(this.getState(RTL));
+        if (rtlReconnect && adr.srcAddress) {
             this.startStreamAsync(new StrimingTask(adr.srcAddress, RTL), true);
         }
         else {
             this.updateState(RTL, 'disconnected');
         }
 
+        
         // check if the stream was repeated to an output address
-        if (repeatToOptionalOutputReconnecting && adr.optionalOutputAddress) {
+        const rtoReconnec = ['connected', 'connecting']
+            .includes(this.getState('repeatToOptionalOutput'));
+        if (rtoReconnec && adr.optionalOutputAddress) {
             this.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true);
         }
         else {
@@ -893,6 +887,7 @@ class Restreamer {
 
     /**
      * @param {StrimingTask} task
+     * @returns {FfmpegCommand.FfmpegCommand}
     */
     static buildCommand(task) {
         const rtmpUrl = this.getRTMPStreamUrl();
@@ -993,10 +988,10 @@ class Restreamer {
     /**
      * 
      * @param {StrimingTask} task 
-     * @param {boolean} force 
+     * @param {boolean} [force]
      * @returns 
      */
-    static async startStreamAsync(task, force = false) {
+    static async startStreamAsync(task, force) {
         logger.inf?.('Start streaming', task.streamType);
         if (rtl_task === null) {
             rtl_task = task;
@@ -1015,44 +1010,8 @@ class Restreamer {
         let options = await this.getOptions(task);
         if (null === options) return;
 
-        // const url = task.streamType === RTL ? task.streamUrl : this.getRTMPStreamUrl();
-        // let options;
-        // while (!options) {
-        //     options = await this.probeStream(url, task.streamType).catch(
-        //         /**@param {string} error reject reason*/
-        //         error => {
-        //             logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType)
-        //             this.updateState(task.streamType, 'error', error)
-        //         })
-        //     if (this.data.userActions[task.streamType] === 'stop') {
-        //         this.updateState(task.streamType, 'disconnected')
-        //         logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
-        //         return
-        //     }
-        //     if (!options) {
-        //         logger.dbg?.(`Try spawn ffprobe in ${task.restart_wait} ms`, task.streamType)
-        //         await timeout(task.restart_wait += 90)
-        //     }
-        // }
-
         task.connected = false;
         const command = this.buildCommand(task);
-
-        // const retry = () => {
-        //     logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
-
-        //     this.setTimeout(task.streamType, 'retry', () => {
-        //         logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
-
-        //         if (this.data.userActions[task.streamType] === 'stop') {
-        //             logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-        //             this.updateState(task.streamType, 'disconnected');
-        //             return;
-        //         }
-
-        //         this.startStreamAsync(task);
-        //     }, task.restart_wait);
-        // };
 
         const replace_video = {
             videoid: this.data.options.video.id,
@@ -1128,7 +1087,7 @@ class Restreamer {
                 task.beginStaleDetection();
                 task.connected = true;
             })
-            .on('stderr', /**@param {string} str */ str => {
+            .on('stderr', (str) => {
                 if (!str.startsWith('frame=')) {
                     logger.wrn?.(`msg: '${str}'`, 'stderr');
                     return;
@@ -1139,39 +1098,8 @@ class Restreamer {
                 const n = parseInt(str.slice(6), 10);
                 p.currentFps = (n - p.frames) / 2;
                 p.frames = task.nFrames = n;
-
-                // compare the current number of frames
-                // if (task.nFrames != n) {
-                //     task.nFrames = n
-                //     // add/reset a stale timeout if the number of frames changed
-                //     this.setTimeoutUnsafe(task.streamType, 'stale', () => {
-                //         logger.warn('Stale connection', task.streamType)
-                //         this.stopStream(task.streamType)
-                //     }, config.ffmpeg.monitor.stale_wait)
-                // }
-
                 this.updateProgressOnGui();
             })
-
-        // .on('progress', (progress) => {
-        //     if (!task.connected && Restreamer.data.states[task.streamType].type === 'connecting') {
-        //         Restreamer.updateState(task.streamType, 'connected')
-        //         task.connected = true
-        //     }
-
-        //     // compare the current number of frames
-        //     if (task.nFrames != progress.frames) {
-        //         task.nFrames = progress.frames
-        //         // add/reset a stale timeout if the number of frames changed
-        //         Restreamer.setTimeout(task.streamType, 'stale', () => {
-        //             logger.warn('Stale connection', task.streamType)
-        //             Restreamer.stopStream(task.streamType)
-        //         }, config.ffmpeg.monitor.stale_wait)
-        //     }
-
-        //     Restreamer.data.progresses[task.streamType] = progress
-        //     Restreamer.updateProgressOnGui()
-        // })
 
         this.data.progresses[task.streamType].frames = 0;
         command.run();
@@ -1248,17 +1176,17 @@ class Restreamer {
     /**
      * 
      * @param {StrimingTask} task 
-     * @param {boolean} force 
+     * @param {boolean} [force]
      * @returns 
      */
-    static startStream(task, force = false) {
+    static startStream(task, force) {
         // remove any running timeouts
         Restreamer.setTimeout(task.streamType, 'retry', null);
         Restreamer.setTimeout(task.streamType, 'stale', null);
 
         if (!force) {
             // check if there's currently no other stream connected or connecting
-            let state = Restreamer.getState(task.streamType)
+            let state = Restreamer.getState(task.streamType);
             if (state == 'connected' || state == 'connecting') {
                 logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType);
                 return;
@@ -1426,10 +1354,10 @@ class Restreamer {
      * @param {string} streamType Either ${RTL} or 'repeatToOptionalOutput'
      * @param {string} target Kind of timeout, either 'retry' or 'stale'
      * @param {function | null} func Callback function
-     * @param {number | undefined} delay Delay for the timeout
+     * @param {number | undefined} [delay] Delay for the timeout
      * @return {void}
      */
-    static setTimeout(streamType, target, func, delay = undefined) {
+    static setTimeout(streamType, target, func, delay) {
         const tots = this.data.timeouts;
 
         if (!Object.prototype.hasOwnProperty.call(tots, target)) {
