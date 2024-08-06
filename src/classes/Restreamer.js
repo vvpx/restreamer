@@ -200,7 +200,7 @@ class Restreamer {
         }
 
         if (rtl_task) {
-            rtl_task.cancellWait();
+            rtl_task.cancellProbeRetry();
             rtl_task = null;
         }
     }
@@ -935,7 +935,7 @@ class Restreamer {
      * @param {StrimingTask} task
     */
     static async getOptions(task) {
-        let options;
+        let options = null;
         const url = task.streamType === RTL ? task.streamUrl : this.getRTMPStreamUrl();
         const probeArgs = [
             '-of',
@@ -953,7 +953,7 @@ class Restreamer {
 
         probeArgs.push(url);
 
-        const testUserAction = () => {
+        const stopClicked = () => {
             if (this.data.userActions[task.streamType] === 'stop') {
                 this.updateState(task.streamType, 'disconnected');
                 logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
@@ -962,23 +962,23 @@ class Restreamer {
             return false;
         }
 
-        while (!options) {
-            if (testUserAction()) return null;
-
+        while (!options && !stopClicked()) {
             options = await this.probeStream(probeArgs, task.streamType)
                 .catch(
                     /**@param {string} error reject reason*/
                     error => {
                         logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType);
                         this.updateState(task.streamType, 'error', error);
-                    })
+                    });
 
-            if (testUserAction()) return null;
+            if (stopClicked()) {
+                options = null;
+                break;
+            }
 
             if (!options) {
-                let p = task.waitReconnectPeriod();
-                logger.dbg?.(`Try spawn ffprobe in ${task.waitTimer.current} ms`, task.streamType);
-                await p;
+                logger.dbg?.(`Try spawn ffprobe in ${task.probeRetryTime()} ms`, task.streamType);
+                await task.waitProbeRetry();
             }
         }
 
@@ -1417,26 +1417,26 @@ class Restreamer {
                 }
 
                 this.startStreamAsync(new StrimingTask(streamUrl, options.streamType));
-            })
+            });
 
             socket.on('stopStream', streamType => {
                 // logger.dbg?.('Got "stopStream" event', streamType)
                 this.updateUserAction(streamType, 'stop');
                 this.stopStream(streamType);
-            })
+            });
 
             socket.on('checkStates', () => {
                 // logger.dbg?.('Got "checkStates" event')
                 this.updateStreamDataOnGui();
-            })
+            });
 
             socket.on('playerOptions', player => {
                 // logger.dbg?.('Got "playerOptions" event')
                 this.updatePlayerOptions(player);
-            })
+            });
 
             // socket.on('disconnect', (reason) => logger.inf?.('disconnect: ' + reason))
-        })
+        });
     }
 
     /**
@@ -1538,7 +1538,7 @@ function StrimingTask(streamUrl, streamType) {
     this.intervalId;
     this.prevnFrame;
     /** @type {timer}*/
-    this.waitTimer;
+    this.probeRetryTimer;
 
     this.reset = () => {
         this.connected = false;
@@ -1552,8 +1552,8 @@ function StrimingTask(streamUrl, streamType) {
             this.intervalId = undefined;
         }
 
-        if (this.waitTimer) {
-            this.waitTimer = null;
+        if (this.probeRetryTimer) {
+            this.probeRetryTimer = null;
         }
     };
 
@@ -1569,23 +1569,21 @@ function StrimingTask(streamUrl, streamType) {
         }, config.ffmpeg.monitor.stale_wait).unref();
     };
 
-    /**
-     * @returns {Promise<boolean>}
-     */
-    this.waitReconnectPeriod = () => {
-        if (!this.waitTimer) this.waitTimer = new timer(this.restart_wait, 90);
-        return this.waitTimer.wait();
-    };
+    this.waitProbeRetry = () => (this.probeRetryTimer ??= new timer(this.restart_wait, 88)).wait();
 
-    this.cancellWait = () => {
-        if (this.waitTimer) {
-            logger.inf?.('Timer cancelled', this.streamType);
-            this.waitTimer.cancell();
-            this.waitTimer = null;
+    this.cancellProbeRetry = () => {
+        if (this.probeRetryTimer) {
+            logger.inf?.('Try cancell probe retry timer', this.streamType);
+            this.probeRetryTimer.cancell();
+            this.probeRetryTimer = null;
         }
     };
 
     this.reset();
+}
+
+StrimingTask.prototype.probeRetryTime = function () {
+    return this.probeRetryTimer?.current ?? this.restart_wait;
 }
 
 module.exports = Restreamer;
