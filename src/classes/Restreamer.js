@@ -11,10 +11,11 @@ const FfmpegCommand = require('fluent-ffmpeg');
 const { JsonDB, Config } = require('node-json-db');
 const logger = require('./Logger')('Restreamer');
 const wsCtrl = require('./WebsocketsController');
-const { RaisingTimer: timer } = require('./Timers.js');
+const { RaisingTimer: rtimer, Timer } = require('./Timers.js');
 // const task_key = Symbol.for('task');
 
 const { timeout_key: probe_tot_key, socket_timeout } = config.ffmpeg.probe;
+const restartTimespan = config.ffmpeg.monitor.restart_wait;
 const db = new JsonDB(new Config(config.jsondb, true, false));
 
 // FfmpegCommand.setFfmpegPath('/usr/local/bin/ffmpeg');
@@ -226,11 +227,11 @@ class Restreamer {
             this.updateState(RTL, 'disconnected');
         }
 
-        
+
         // check if the stream was repeated to an output address
-        const rtoReconnec = ['connected', 'connecting']
+        const rtoReconnect = ['connected', 'connecting']
             .includes(this.getState('repeatToOptionalOutput'));
-        if (rtoReconnec && adr.optionalOutputAddress) {
+        if (rtoReconnect && adr.optionalOutputAddress) {
             this.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true);
         }
         else {
@@ -956,7 +957,7 @@ class Restreamer {
         const stopClicked = () => {
             if (this.data.userActions[task.streamType] === 'stop') {
                 this.updateState(task.streamType, 'disconnected');
-                logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+                // logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
                 return true;
             }
             return false;
@@ -1063,7 +1064,7 @@ class Restreamer {
 
                 logger.inf?.(task.streamType + ': ended normally');
                 this.updateState(task.streamType, 'stopped');
-                this.retry(task);
+                this.retryAsync(task);
             })
             .on('error', error => {
                 task.reset();
@@ -1079,7 +1080,7 @@ class Restreamer {
 
                 logger.error(error.message, task.streamType);
                 this.updateState(task.streamType, 'error', error.message);
-                this.retry(task);
+                this.retryAsync(task);
             })
             .once('stderr', () => {
                 logger.dbg?.('connected', task.streamType);
@@ -1110,18 +1111,32 @@ class Restreamer {
      * @param {StrimingTask} task 
      */
     static retry(task) {
-        logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
+        logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + restartTimespan + ' ms', task.streamType);
 
-        this.setTimeout(task.streamType, 'retry', () => {
-            if (this.data.userActions[task.streamType] === 'stop') {
+        this.setTimeoutUnsafe(task, 'retry', (t) => {
+            // this.data.timeouts.retry[t.streamType] = null;
+
+            if (Restreamer.data.userActions[t.streamType] === 'stop') {
                 logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
                 this.updateState(task.streamType, 'disconnected');
                 return;
             }
 
-            logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
+            logger.inf?.(`Retry connect to "${t.streamUrl}"`, t.streamType);
+            Restreamer.startStreamAsync(t);
+        }, restartTimespan);
+    }
+
+    /**
+     * перезапуск стрима
+     * @param {StrimingTask} task 
+     */
+    static async retryAsync(task) {
+        logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + restartTimespan + ' ms', task.streamType);
+        if (await (task.retryTimer ??= new Timer()).wait(restartTimespan)) {
+            logger.inf?.(`Retry connect to "${task.streamUrl}"`, task.streamType);
             this.startStreamAsync(task);
-        }, task.restart_wait);
+        }
     }
 
     /**
@@ -1262,7 +1277,7 @@ class Restreamer {
 
             command
                 .on('start', (commandLine) => {
-                    task.reset()
+                    task.reset();
                     Restreamer.data.processes[task.streamType] = command;
 
                     if (Restreamer.data.userActions[task.streamType] == 'stop') {
@@ -1379,17 +1394,20 @@ class Restreamer {
 
     /**
      * set a timeout
-     * @param {string} streamType Either ${RTL} or 'repeatToOptionalOutput'
+     * @param {StrimingTask} task 
      * @param {string} target Kind of timeout, either 'retry', 'stale' or 'snapshot'
-     * @param {function | null} func Callback function
+     * @param {(arg: StrimingTask) => void} [func] Callback function
      * @param {number | undefined} delay Delay for the timeout
      * @return {void}
      */
-    static setTimeoutUnsafe(streamType, target, func, delay) {
-        // logger.dev?.(`setTimeoutUnsafe(${target})`)
-        const tots = this.data.timeouts;
-        clearTimeout(tots[target][streamType]);
-        if (func) tots[target][streamType] = setTimeout(func, delay);
+    static setTimeoutUnsafe(task, target, func, delay) {
+        let tos = this.data.timeouts[target];
+        /**@type {NodeJS.Timeout} */
+        let to = tos[task.streamType];
+        tos[task.streamType] = to?.refresh() ?? setTimeout(func, delay, task);
+
+        // (to ?? false) && clearTimeout(to);
+        // tos[task.streamType] = (func ?? false) === false ? null : setTimeout(func, delay, task);
     }
 
     /**bind websocket events on application start*/
@@ -1497,6 +1515,7 @@ class Restreamer {
 
     static close() {
         /**@type {FfmpegCommand.FfmpegCommand}*/ let cmd = this.data.processes.repeatToLocalNginx;
+        Restreamer.setUserAction(RTL, 'stop');
         if (cmd?.ffmpegProc) {
             rtl_task?.reset();
             cmd.removeAllListeners('error');
@@ -1537,8 +1556,10 @@ function StrimingTask(streamUrl, streamType) {
     this.restart_wait;
     this.intervalId;
     this.prevnFrame;
-    /** @type {timer}*/
+    /** @type {rtimer} */
     this.probeRetryTimer;
+    /** @type {Timer} */
+    this.retryTimer;
 
     this.reset = () => {
         this.connected = false;
@@ -1569,7 +1590,7 @@ function StrimingTask(streamUrl, streamType) {
         }, config.ffmpeg.monitor.stale_wait).unref();
     };
 
-    this.waitProbeRetry = () => (this.probeRetryTimer ??= new timer(this.restart_wait, 88)).wait();
+    this.waitProbeRetry = () => (this.probeRetryTimer ??= new rtimer(this.restart_wait, 88)).wait();
 
     this.cancellProbeRetry = () => {
         if (this.probeRetryTimer) {
