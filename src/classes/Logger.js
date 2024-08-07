@@ -9,6 +9,11 @@ const LEVEL_DEBUG = 4;
 const DEBUG = ((env) => env === true || env === 'true')(process.env.RS_DEBUG ?? false);
 const LOG_LEVEL = DEBUG ? LEVEL_DEBUG : parseInt(process.env.RS_LOGLEVEL || `${LEVEL_INFO}`);
 
+/**
+ * @typedef LoggerMethod
+ * @type {(message: string, context?: string) => void}
+ */
+
 
 class Logger {
 
@@ -44,10 +49,10 @@ class Logger {
         process.stdout.write(this.format(type, message, context));
     }
 
-    info(msg, ctx) { }
-    warn(msg, ctx) { }
-    debug(msg, ctx) { }
-    error(msg, ctx) { }
+    /**@type {LoggerMethod} */ info() { }
+    /**@type {LoggerMethod} */ warn() { }
+    /**@type {LoggerMethod} */ debug() { }
+    /**@type {LoggerMethod} */ error() { }
 }
 
 
