@@ -970,6 +970,7 @@ class Restreamer {
                     error => {
                         logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType);
                         this.updateState(task.streamType, 'error', error);
+                        return null;
                     });
 
             if (stopClicked()) {
@@ -1010,6 +1011,8 @@ class Restreamer {
         this.updateState(task.streamType, 'connecting');
         let options = await this.getOptions(task);
         if (null === options) return;
+        console.log('options:', options);
+        // options: { audio: [ 'audio_codec_none' ], video: [ 'video_codec_copy' ] }
 
         task.connected = false;
         const command = this.buildCommand(task);
