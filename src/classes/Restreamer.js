@@ -1011,7 +1011,7 @@ class Restreamer {
         this.updateState(task.streamType, 'connecting');
         let options = await this.getOptions(task);
         if (null === options) return;
-        console.log('options:', options);
+
         // options: { audio: [ 'audio_codec_none' ], video: [ 'video_codec_copy' ] }
 
         task.connected = false;
@@ -1103,7 +1103,7 @@ class Restreamer {
                 p.currentFps = (n - p.frames) / 2;
                 p.frames = task.nFrames = n;
                 this.updateProgressOnGui();
-            })
+            });
 
         this.data.progresses[task.streamType].frames = 0;
         command.run();
@@ -1235,14 +1235,13 @@ class Restreamer {
         const retry = () => {
             logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
             Restreamer.setTimeout(task.streamType, 'retry', () => {
-                logger.inf?.('Retry to connect to "' + task.streamUrl + '"', task.streamType);
-
                 if (Restreamer.data.userActions[task.streamType] == 'stop') {
                     logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
                     Restreamer.updateState(task.streamType, 'disconnected');
                     return;
                 }
 
+                logger.inf?.('Retry to connect to "' + task.streamUrl + '"', task.streamType);
                 Restreamer.startStream(task);
             }, task.restart_wait);
             task.restart_wait += 100;
@@ -1264,7 +1263,7 @@ class Restreamer {
             }
 
             for (let o in options.video) {
-                if (o.length) this.addStreamOptions(command, options.video[o], replace_video)
+                if (o.length) this.addStreamOptions(command, options.video[o], replace_video);
             }
 
             const replace_audio = {
@@ -1275,7 +1274,7 @@ class Restreamer {
             }
 
             for (let o in options.audio) {
-                if (o.length) this.addStreamOptions(command, options.audio[o], replace_audio)
+                if (o.length) this.addStreamOptions(command, options.audio[o], replace_audio);
             }
 
             command
@@ -1284,32 +1283,32 @@ class Restreamer {
                     Restreamer.data.processes[task.streamType] = command;
 
                     if (Restreamer.data.userActions[task.streamType] == 'stop') {
-                        Restreamer.stopStream(task.streamType)
-                        logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', task.streamType)
-                        return
+                        Restreamer.stopStream(task.streamType);
+                        logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', task.streamType);
+                        return;
                     }
 
-                    logger.dbg?.('Spawned: ' + commandLine, task.streamType)
+                    logger.dbg?.('Spawned: ' + commandLine, task.streamType);
                 })
 
                 // stream ended
                 .on('end', () => {
-                    Restreamer.data.processes[task.streamType] = null
-                    Restreamer.setTimeout(task.streamType, 'retry', null)
-                    Restreamer.setTimeout(task.streamType, 'stale', null)
-                    Restreamer.data.progresses[task.streamType].currentFps = 0
-                    Restreamer.data.progresses[task.streamType].currentKbps = 0
+                    Restreamer.data.processes[task.streamType] = null;
+                    Restreamer.setTimeout(task.streamType, 'retry', null);
+                    Restreamer.setTimeout(task.streamType, 'stale', null);
+                    Restreamer.data.progresses[task.streamType].currentFps = 0;
+                    Restreamer.data.progresses[task.streamType].currentKbps = 0;
 
-                    Restreamer.updateState(task.streamType, 'stopped')
+                    Restreamer.updateState(task.streamType, 'stopped');
 
                     if (Restreamer.data.userActions[task.streamType] == 'stop') {
-                        Restreamer.updateState(task.streamType, 'disconnected')
-                        logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType)
-                        return
+                        Restreamer.updateState(task.streamType, 'disconnected');
+                        logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+                        return;
                     }
 
-                    logger.inf?.(task.streamType + ': ended normally')
-                    retry()
+                    logger.inf?.(task.streamType + ': ended normally');
+                    retry();
                 })
 
                 // stream error handler (error, _stdout, _stderr)
@@ -1355,7 +1354,7 @@ class Restreamer {
 
             command.run();
         }).catch((error) => {
-            logger.error('Failed to spawn ffprobe: ' + error.toString(), task.streamType)
+            logger.error('Failed to spawn ffprobe: ' + error.toString(), task.streamType);
             if (Restreamer.data.userActions[task.streamType] == 'stop') {
                 Restreamer.updateState(task.streamType, 'disconnected');
                 logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
