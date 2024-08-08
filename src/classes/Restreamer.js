@@ -977,6 +977,7 @@ class Restreamer {
                     error => {
                         logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType);
                         this.updateState(task.streamType, 'error', error);
+                        return null;
                     })
 
             if (testUserAction()) return null;
@@ -1016,44 +1017,8 @@ class Restreamer {
         let options = await this.getOptions(task);
         if (null === options) return;
 
-        // const url = task.streamType === RTL ? task.streamUrl : this.getRTMPStreamUrl();
-        // let options;
-        // while (!options) {
-        //     options = await this.probeStream(url, task.streamType).catch(
-        //         /**@param {string} error reject reason*/
-        //         error => {
-        //             logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType)
-        //             this.updateState(task.streamType, 'error', error)
-        //         })
-        //     if (this.data.userActions[task.streamType] === 'stop') {
-        //         this.updateState(task.streamType, 'disconnected')
-        //         logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType)
-        //         return
-        //     }
-        //     if (!options) {
-        //         logger.dbg?.(`Try spawn ffprobe in ${task.restart_wait} ms`, task.streamType)
-        //         await timeout(task.restart_wait += 90)
-        //     }
-        // }
-
         task.connected = false;
         const command = this.buildCommand(task);
-
-        // const retry = () => {
-        //     logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
-
-        //     this.setTimeout(task.streamType, 'retry', () => {
-        //         logger.inf?.(`Retry to connect to "${task.streamUrl}"`, task.streamType);
-
-        //         if (this.data.userActions[task.streamType] === 'stop') {
-        //             logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-        //             this.updateState(task.streamType, 'disconnected');
-        //             return;
-        //         }
-
-        //         this.startStreamAsync(task);
-        //     }, task.restart_wait);
-        // };
 
         const replace_video = {
             videoid: this.data.options.video.id,
@@ -1260,7 +1225,7 @@ class Restreamer {
 
         if (!force) {
             // check if there's currently no other stream connected or connecting
-            let state = Restreamer.getState(task.streamType)
+            let state = Restreamer.getState(task.streamType);
             if (state == 'connected' || state == 'connecting') {
                 logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType);
                 return;
@@ -1460,7 +1425,6 @@ class Restreamer {
      * @return {void}
      */
     static setTimeoutUnsafe(streamType, target, func, delay) {
-        // logger.dev?.(`setTimeoutUnsafe(${target})`)
         const tots = this.data.timeouts;
         clearTimeout(tots[target][streamType]);
         if (func) tots[target][streamType] = setTimeout(func, delay);
