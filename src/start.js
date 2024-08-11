@@ -47,11 +47,11 @@ require('node:child_process')
             .catch(error => {
                 logger.err?.('Error starting webserver and nginx for application: ' + error);
                 logger.err?.(`${error.stack}`);
-            })
+            });
     })
     .on('error', error => {
         logger.err?.(error.message);
-    })
+    });
 
 process.on('SIGTERM', () => {
     logger.info('Receive SIGTERM signal');
