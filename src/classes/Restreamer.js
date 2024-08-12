@@ -2,6 +2,7 @@
 
 const config = globalThis.appConfig;
 const RTL = "repeatToLocalNginx";
+const RTO = "repeatToOptionalOutput";
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -219,8 +220,7 @@ class Restreamer {
         this.writeToPlayerConfig();
 
         // check if a stream was repeated locally
-        const rtlReconnect = ['connected', 'connecting', 'error'].includes(this.getState(RTL));
-        if (rtlReconnect && adr.srcAddress) {
+        if (adr.srcAddress && ['connected', 'connecting', 'error'].includes(this.getState(RTL))) {
             this.startStreamAsync(new StrimingTask(adr.srcAddress, RTL), true);
         }
         else {
@@ -229,13 +229,11 @@ class Restreamer {
 
 
         // check if the stream was repeated to an output address
-        const rtoReconnect = ['connected', 'connecting']
-            .includes(this.getState('repeatToOptionalOutput'));
-        if (rtoReconnect && adr.optionalOutputAddress) {
-            this.startStream(new StrimingTask(adr.optionalOutputAddress, 'repeatToOptionalOutput'), true);
+        if (adr.optionalOutputAddress && ['connected', 'connecting'].includes(this.getState(RTO))) {
+            this.startStream(new StrimingTask(adr.optionalOutputAddress, RTO), true);
         }
         else {
-            this.updateState('repeatToOptionalOutput', 'disconnected');
+            this.updateState(RTO, 'disconnected');
         }
     }
 
