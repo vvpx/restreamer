@@ -63,8 +63,8 @@ bin
 # Project files #
 #################
 src/webserver/public/dist/**
-src/webserver/public/config.js
-db/**
+# src/webserver/public/config.js
+# db/**
 heapdump
 Gemfile.lock
 build/*
