@@ -980,9 +980,7 @@ class Restreamer {
      */
     static async startStreamAsync(task, force) {
         logger.inf?.('Start streaming', task.streamType);
-        if (rtl_task === null) {
-            rtl_task = task;
-        }
+        rtl_task ??= task;
 
         if (!force) {
             const state = this.getState(task.streamType);
@@ -994,99 +992,105 @@ class Restreamer {
 
         // update the state on the frontend
         this.updateState(task.streamType, 'connecting');
-        let options = await this.getOptions(task);
-        if (null === options) return;
-
-        // options: { audio: [ 'audio_codec_none' ], video: [ 'video_codec_copy' ] }
 
         task.connected = false;
-        const command = this.buildCommand(task);
 
-        const replace_video = {
-            videoid: this.data.options.video.id,
-            preset: this.data.options.video.preset,
-            bitrate: this.data.options.video.bitrate,
-            fps: this.data.options.video.fps,
-            gop: parseInt(this.data.options.video.fps) * 2,
-            profile: this.data.options.video.profile,
-            tune: this.data.options.video.tune
-        };
+        let command = task.command ?? this.buildCommand(task);
 
-        for (let vo of options.video)
-            this.addStreamOptions(command, vo, replace_video);
+        if (!task.command) {
+            // options: { audio: [ 'audio_codec_none' ], video: [ 'video_codec_copy' ] }
+            let options = await this.getOptions(task);
+            if (null === options) return;
 
-        const replace_audio = {
-            audioid: this.data.options.audio.id,
-            bitrate: this.data.options.audio.bitrate,
-            channels: this.data.options.audio.channels,
-            sampling: this.data.options.audio.sampling
-        };
+            const replace_video = {
+                videoid: this.data.options.video.id,
+                preset: this.data.options.video.preset,
+                bitrate: this.data.options.video.bitrate,
+                fps: this.data.options.video.fps,
+                gop: parseInt(this.data.options.video.fps) * 2,
+                profile: this.data.options.video.profile,
+                tune: this.data.options.video.tune
+            };
 
-        for (let ao of options.audio)
-            this.addStreamOptions(command, ao, replace_audio);
+            for (let vo of options.video)
+                this.addStreamOptions(command, vo, replace_video);
 
-        command
-            .on('start', commandLine => {
-                task.reset();
-                this.data.processes[task.streamType] = command;
-                logger.dbg?.('Spawned: ' + commandLine, task.streamType);
+            const replace_audio = {
+                audioid: this.data.options.audio.id,
+                bitrate: this.data.options.audio.bitrate,
+                channels: this.data.options.audio.channels,
+                sampling: this.data.options.audio.sampling
+            };
 
-                if (this.data.userActions[task.streamType] === 'stop') {
-                    logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', task.streamType);
-                    this.stopStream(task.streamType);
-                }
-            })
-            .on('end', () => {
-                task.reset();
-                this.data.processes[task.streamType] = null;
-                this.data.progresses[task.streamType].currentFps = 0;
-                this.data.progresses[task.streamType].currentKbps = 0;
-                logger.inf?.(task.streamType + ': ended normally');
+            for (let ao of options.audio)
+                this.addStreamOptions(command, ao, replace_audio);
 
-                if (this.data.userActions[task.streamType] === 'stop') {
-                    logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-                    this.updateState(task.streamType, 'disconnected');
-                    return;
-                }
+            task.command = command;
+            command
+                .on('start', commandLine => {
+                    let t = rtl_task.reset();
+                    this.data.processes[t.streamType] ??= t.command;
+                    logger.dbg?.('Spawned: ' + commandLine, t.streamType);
 
-                this.updateState(task.streamType, 'stopped');
-                this.retryAsync(task);
-            })
-            .on('error', error => {
-                task.reset();
-                this.data.processes[task.streamType] = null;
-                this.data.progresses[task.streamType].currentFps = 0;
-                this.data.progresses[task.streamType].currentKbps = 0;
+                    if (this.data.userActions[t.streamType] === 'stop') {
+                        logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', t.streamType);
+                        this.stopStream(t.streamType);
+                    }
+                })
+                .on('end', () => {
+                    let task = rtl_task.reset();
+                    this.data.processes[task.streamType] = null;
+                    this.data.progresses[task.streamType].currentFps = 0;
+                    this.data.progresses[task.streamType].currentKbps = 0;
+                    logger.inf?.(task.streamType + ': ended normally');
 
-                if (this.data.userActions[task.streamType] === 'stop') {
-                    logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
-                    this.updateState(task.streamType, 'disconnected');
-                    return;
-                }
+                    if (this.data.userActions[task.streamType] === 'stop') {
+                        logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+                        this.updateState(task.streamType, 'disconnected');
+                        return;
+                    }
 
-                logger.error(error.message, task.streamType);
-                this.updateState(task.streamType, 'error', error.message);
-                this.retryAsync(task);
-            })
-            .once('stderr', () => {
-                logger.dbg?.('connected', task.streamType);
-                this.updateState(task.streamType, 'connected');
-                task.beginStaleDetection();
-                task.connected = true;
-            })
-            .on('stderr', (str) => {
-                if (!str.startsWith('frame=')) {
-                    logger.wrn?.(`msg: '${str}'`, 'stderr');
-                    return;
-                }
+                    this.updateState(task.streamType, 'stopped');
+                    this.retryAsync(task);
+                })
+                .on('error', error => {
+                    let task = rtl_task.reset();
+                    this.data.processes[task.streamType] = null;
+                    this.data.progresses[task.streamType].currentFps = 0;
+                    this.data.progresses[task.streamType].currentKbps = 0;
 
-                /**@type {Progress}*/
-                const p = this.data.progresses[task.streamType];
-                const n = parseInt(str.slice(6), 10);
-                p.currentFps = (n - p.frames) / 2;
-                p.frames = task.nFrames = n;
-                this.updateProgressOnGui();
-            });
+                    if (this.data.userActions[task.streamType] === 'stop') {
+                        logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+                        this.updateState(task.streamType, 'disconnected');
+                        return;
+                    }
+
+                    logger.error(error.message, task.streamType);
+                    this.updateState(task.streamType, 'error', error.message);
+                    this.retryAsync(task);
+                })
+                .once('stderr', () => {
+                    let task = rtl_task;
+                    logger.dbg?.('connected', task.streamType);
+                    this.updateState(task.streamType, 'connected');
+                    task.beginStaleDetection();
+                    task.connected = true;
+                })
+                .on('stderr', (str) => {
+                    if (!str.startsWith('frame=')) {
+                        logger.wrn?.(`msg: '${str}'`, 'stderr');
+                        return;
+                    }
+
+                    let task = rtl_task;
+                    /**@type {Progress}*/
+                    const p = this.data.progresses[task.streamType];
+                    const n = parseInt(str.slice(6), 10);
+                    p.currentFps = (n - p.frames) / 2;
+                    p.frames = task.nFrames = n;
+                    this.updateProgressOnGui();
+                });
+        }
 
         this.data.progresses[task.streamType].frames = 0;
         command.run();
@@ -1494,15 +1498,20 @@ Restreamer.data = new RsData;
  * @property {number} currentKbps
  */
 
+const defaultWait = config.ffmpeg.monitor.restart_wait;
+
 /**
  * Information to start stream
  * @param {string} streamUrl 
  * @param {string} streamType 
  */
 function StrimingTask(streamUrl, streamType) {
-    const defaultWait = config.ffmpeg.monitor.restart_wait;
     this.streamUrl = streamUrl;
     this.streamType = streamType;
+
+    /** @type {FfmpegCommand.FfmpegCommand} */
+    this.command;
+
     // this.progress = Restreamer.data.progresses[streamType]
 
     /**@type {boolean} */
@@ -1515,55 +1524,60 @@ function StrimingTask(streamUrl, streamType) {
     this.restart_wait;
     this.intervalId;
     this.prevnFrame;
+
     /** @type {rtimer} */
     this.probeRetryTimer;
+    
     /** @type {Timer} */
     this.retryTimer;
-
-    this.reset = () => {
-        this.connected = false;
-        this.nFrames = 0;
-        this.prevnFrame = 0;
-        this.restart_wait = defaultWait;
-
-        if (this.intervalId) {
-            logger.dbg?.(`Clear stale interval`, this.streamType);
-            clearInterval(this.intervalId);
-            this.intervalId = undefined;
-        }
-
-        if (this.probeRetryTimer) {
-            this.probeRetryTimer = null;
-        }
-    };
-
-    this.beginStaleDetection = () => {
-        this.intervalId = setInterval(() => {
-            logger.dbg?.(`check stale, frames: ${this.nFrames}`, this.streamType);
-            if (!this.connected) return;
-            if (this.nFrames === this.prevnFrame) {
-                Restreamer.stopStream(this.streamType);
-                return;
-            }
-            this.prevnFrame = this.nFrames;
-        }, config.ffmpeg.monitor.stale_wait).unref();
-    };
-
-    this.waitProbeRetry = () => (this.probeRetryTimer ??= new rtimer(this.restart_wait, 88)).wait();
-
-    this.cancellProbeRetry = () => {
-        if (this.probeRetryTimer) {
-            logger.inf?.('Try cancell probe retry timer', this.streamType);
-            this.probeRetryTimer.cancell();
-            this.probeRetryTimer = null;
-        }
-    };
 
     this.reset();
 }
 
+StrimingTask.prototype.cancellProbeRetry = function () {
+    if (this.probeRetryTimer) {
+        logger.inf?.('Try cancell probe retry timer', this.streamType);
+        this.probeRetryTimer.cancell();
+        this.probeRetryTimer = null;
+    }
+};
+
+StrimingTask.prototype.waitProbeRetry = function () {
+    return (this.probeRetryTimer ??= new rtimer(this.restart_wait, 88)).wait();
+};
+
+StrimingTask.prototype.beginStaleDetection = function () {
+    this.intervalId = setInterval(() => {
+        logger.dbg?.(`check stale, frames: ${this.nFrames}`, this.streamType);
+        if (!this.connected) return;
+        if (this.nFrames === this.prevnFrame) {
+            Restreamer.stopStream(this.streamType);
+            return;
+        }
+        this.prevnFrame = this.nFrames;
+    }, config.ffmpeg.monitor.stale_wait).unref();
+};
+
+StrimingTask.prototype.reset = function () {
+    this.connected = false;
+    this.nFrames = 0;
+    this.prevnFrame = 0;
+    this.restart_wait = defaultWait;
+
+    if (this.intervalId) {
+        logger.dbg?.(`Clear stale interval`, this.streamType);
+        clearInterval(this.intervalId);
+        this.intervalId = undefined;
+    }
+
+    if (this.probeRetryTimer)
+        this.probeRetryTimer = null;
+
+    return this;
+};
+
 StrimingTask.prototype.probeRetryTime = function () {
     return this.probeRetryTimer?.current ?? this.restart_wait;
-}
+};
 
 module.exports = Restreamer;
