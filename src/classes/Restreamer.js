@@ -1040,8 +1040,6 @@ class Restreamer {
                 .on('end', () => {
                     let task = rtl_task.reset();
                     this.data.processes[task.streamType] = null;
-                    this.data.progresses[task.streamType].currentFps = 0;
-                    this.data.progresses[task.streamType].currentKbps = 0;
                     logger.inf?.(task.streamType + ': ended normally');
 
                     if (this.data.userActions[task.streamType] === 'stop') {
@@ -1056,8 +1054,6 @@ class Restreamer {
                 .on('error', error => {
                     let task = rtl_task.reset();
                     this.data.processes[task.streamType] = null;
-                    this.data.progresses[task.streamType].currentFps = 0;
-                    this.data.progresses[task.streamType].currentKbps = 0;
 
                     if (this.data.userActions[task.streamType] === 'stop') {
                         logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
@@ -1068,13 +1064,6 @@ class Restreamer {
                     logger.error(error.message, task.streamType);
                     this.updateState(task.streamType, 'error', error.message);
                     this.retryAsync(task);
-                })
-                .once('stderr', () => {
-                    let task = rtl_task;
-                    logger.dbg?.('connected', task.streamType);
-                    this.updateState(task.streamType, 'connected');
-                    task.beginStaleDetection();
-                    task.connected = true;
                 })
                 .on('stderr', (str) => {
                     if (!str.startsWith('frame=')) {
@@ -1093,6 +1082,15 @@ class Restreamer {
         }
 
         this.data.progresses[task.streamType].frames = 0;
+        this.data.progresses[task.streamType].currentFps = 0;
+        this.data.progresses[task.streamType].currentKbps = 0;
+        (command.listenerCount('stderr') === 1) && command.once('stderr', () => {
+            let task = rtl_task;
+            logger.inf?.('connected', task.streamType);
+            this.updateState(task.streamType, 'connected');
+            task.beginStaleDetection();
+            task.connected = true;
+        });
         command.run();
     }
 
