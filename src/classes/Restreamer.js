@@ -282,7 +282,7 @@ class Restreamer {
                     }
 
                     let line = '';
-                    for (const l of stderr.split('\n')) line = l || line;
+                    for (let l of stderr.split('\n')) line = l || line;
                     reject(line || err.message);
                     return;
                 }
@@ -922,7 +922,8 @@ class Restreamer {
     */
     static async getOptions(task) {
         let options = null;
-        const url = task.streamType === RTL ? task.streamUrl : this.getRTMPStreamUrl();
+        let streamType = task.streamType;
+        const url = streamType === RTL ? task.streamUrl : this.getRTMPStreamUrl();
         const probeArgs = [
             '-of',
             'json',
@@ -939,32 +940,32 @@ class Restreamer {
 
         probeArgs.push(url);
 
-        const stopClicked = () => {
-            if (this.data.userActions[task.streamType] === 'stop') {
-                this.updateState(task.streamType, 'disconnected');
+        const stopClicked = streamType => {
+            if (this.data.userActions[streamType] === 'stop') {
+                this.updateState(streamType, 'disconnected');
                 // logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
                 return true;
             }
             return false;
         }
 
-        while (!options && !stopClicked()) {
-            options = await this.probeStream(probeArgs, task.streamType)
+        while (!options && !stopClicked(streamType)) {
+            options = await this.probeStream(probeArgs, streamType)
                 .catch(
                     /**@param {string} error reject reason*/
                     error => {
-                        logger.err?.('Failed to spawn ffprobe: ' + error, task.streamType);
-                        this.updateState(task.streamType, 'error', error);
+                        logger.err?.('Failed to spawn ffprobe: ' + error, streamType);
+                        this.updateState(streamType, 'error', error);
                         return null;
                     });
 
-            if (stopClicked()) {
+            if (stopClicked(streamType)) {
                 options = null;
                 break;
             }
 
             if (!options) {
-                logger.dbg?.(`Try spawn ffprobe in ${task.probeRetryTime()} ms`, task.streamType);
+                logger.dbg?.(`Try spawn ffprobe in ${task.probeRetryTime()} ms`, streamType);
                 await task.waitProbeRetry();
             }
         }
