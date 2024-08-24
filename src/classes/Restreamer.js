@@ -1032,7 +1032,7 @@ class Restreamer {
             task.command = command;
             command
                 .on('start', commandLine => {
-                    const t = task;
+                    let t = rtl_task;
                     let streamType = t.streamType;
                     this.data.processes[streamType] ??= t.command;
                     logger.dbg?.('Spawned: ' + commandLine, streamType);
@@ -1043,9 +1043,10 @@ class Restreamer {
                     }
                 })
                 .on('end', () => {
-                    let task = rtl_task.reset();
-                    this.data.processes[task.streamType] = null;
-                    logger.inf?.(task.streamType + ': ended normally');
+                    let t = rtl_task.reset();
+                    let streamType = t.streamType;
+                    this.data.processes[streamType] = null;
+                    logger.inf?.(streamType + ': ended normally');
 
                     if (this.data.userActions[streamType] === 'stop') {
                         logger.dbg?.('Skipping retry because "stop" has been clicked', streamType);
@@ -1054,11 +1055,11 @@ class Restreamer {
                     }
 
                     this.updateState(streamType, 'stopped');
-                    this.retryAsync(task);
+                    this.retryAsync(t);
                 })
                 .on('error', error => {
-                    let task = rtl_task.reset();
-                    this.data.processes[task.streamType] = null;
+                    let t = rtl_task.reset();
+                    this.data.processes[t.streamType] = null;
 
                     if (this.data.userActions[t.streamType] === 'stop') {
                         logger.dbg?.('Skipping retry since "stop" has been clicked', t.streamType);
@@ -1068,7 +1069,7 @@ class Restreamer {
 
                     logger.error(error.message, t.streamType);
                     this.updateState(t.streamType, 'error', error.message);
-                    this.retryAsync(task);
+                    this.retryAsync(t);
                 })
                 .on('stderr', (str) => {
                     if (!str.startsWith('frame=')) {
@@ -1076,12 +1077,12 @@ class Restreamer {
                         return;
                     }
 
-                    // let task = rtl_task;
+                    let t = rtl_task;
                     /**@type {Progress}*/
-                    const p = this.data.progresses[task.streamType];
+                    const p = this.data.progresses[t.streamType];
                     const n = parseInt(str.slice(6), 10);
                     p.currentFps = (n - p.frames) / 2;
-                    p.frames = task.nFrames = n;
+                    p.frames = t.nFrames = n;
                     this.updateProgressOnGui();
                 });
         }
