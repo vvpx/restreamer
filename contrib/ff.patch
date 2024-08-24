@@ -215,7 +215,7 @@ diff -wa -u orig/recipes.js ./recipes.js
      }
 diff -wa -u orig/utils.js ./utils.js
 --- orig/utils.js	2024-07-09 13:06:48.860760406 +0700
-+++ ./utils.js	2024-08-24 07:22:14.814559410 +0700
++++ ./utils.js	2024-08-24 08:19:10.090298618 +0700
 @@ -1,7 +1,7 @@
  /*jshint node:true*/
  'use strict';
@@ -373,5 +373,5 @@ diff -wa -u orig/utils.js ./utils.js
 -      }
 -    };
 -  }
-+  linesRing: new ring(maxLines)
++  linesRing: (maxLines) => new ring(maxLines)
  };
