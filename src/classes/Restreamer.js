@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
 
-const FfmpegCommand = require('fluent-ffmpeg');
+const FfmpegCommand = require('./ffmpeg-shell');
 const { JsonDB, Config } = require('node-json-db');
 const logger = require('./Logger')('Restreamer');
 const wsCtrl = require('./WebsocketsController');
