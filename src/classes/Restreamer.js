@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { execFile } = require('node:child_process');
 
-const FfmpegCommand = require('./ffmpeg-shell');
+const FfmpegCommand = require('./ffmpeg-shell.js');
 const { JsonDB, Config } = require('node-json-db');
 const logger = require('./Logger')('Restreamer');
 const wsCtrl = require('./WebsocketsController');
@@ -876,7 +876,7 @@ class Restreamer {
 
     /**
      * @param {StrimingTask} task
-     * @returns {FfmpegCommand.FfmpegCommand}
+     * @returns {FfmpegCommand}
     */
     static buildCommand(task) {
         const rtmpUrl = this.getRTMPStreamUrl();
@@ -999,7 +999,7 @@ class Restreamer {
 
         task.connected = false;
 
-        let command = task.command ?? this.buildCommand(task);
+        let command = task.command ?? this.buildCommand(task).setName(task.streamType);
 
         if (!task.command) {
             // options: { audio: [ 'audio_codec_none' ], video: [ 'video_codec_copy' ] }
@@ -1031,45 +1031,44 @@ class Restreamer {
 
             task.command = command;
             command
-                .on('start', commandLine => {
-                    let t = rtl_task;
-                    let streamType = t.streamType;
-                    this.data.processes[streamType] ??= t.command;
+                .on('start', /**@this {typeof command} */ function(commandLine) {
+                    let streamType = this._name;
+                    Restreamer.data.processes[streamType] ??= this;
                     logger.dbg?.('Spawned: ' + commandLine, streamType);
 
-                    if (this.data.userActions[streamType] === 'stop') {
+                    if (Restreamer.data.userActions[streamType] === 'stop') {
                         logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', streamType);
-                        this.stopStream(streamType);
+                        Restreamer.stopStream(streamType);
                     }
                 })
                 .on('end', () => {
                     let t = rtl_task.reset();
                     let streamType = t.streamType;
-                    this.data.processes[streamType] = null;
+                    Restreamer.data.processes[streamType] = null;
                     logger.inf?.(streamType + ': ended normally');
 
-                    if (this.data.userActions[streamType] === 'stop') {
+                    if (Restreamer.data.userActions[streamType] === 'stop') {
                         logger.dbg?.('Skipping retry because "stop" has been clicked', streamType);
-                        this.updateState(streamType, 'disconnected');
+                        Restreamer.updateState(streamType, 'disconnected');
                         return;
                     }
 
-                    this.updateState(streamType, 'stopped');
-                    this.retryAsync(t);
+                    Restreamer.updateState(streamType, 'stopped');
+                    Restreamer.retryAsync(t);
                 })
                 .on('error', error => {
                     let t = rtl_task.reset();
-                    this.data.processes[t.streamType] = null;
+                    Restreamer.data.processes[t.streamType] = null;
 
                     if (this.data.userActions[t.streamType] === 'stop') {
                         logger.dbg?.('Skipping retry since "stop" has been clicked', t.streamType);
-                        this.updateState(t.streamType, 'disconnected');
+                        Restreamer.updateState(t.streamType, 'disconnected');
                         return;
                     }
 
                     logger.error(error.message, t.streamType);
-                    this.updateState(t.streamType, 'error', error.message);
-                    this.retryAsync(t);
+                    Restreamer.updateState(t.streamType, 'error', error.message);
+                    Restreamer.retryAsync(t);
                 })
                 .on('stderr', (str) => {
                     if (!str.startsWith('frame=')) {
@@ -1083,7 +1082,7 @@ class Restreamer {
                     const n = parseInt(str.slice(6), 10);
                     p.currentFps = (n - p.frames) / 2;
                     p.frames = t.nFrames = n;
-                    this.updateProgressOnGui();
+                    Restreamer.updateProgressOnGui();
                 });
         }
 
@@ -1093,7 +1092,7 @@ class Restreamer {
         (command.listenerCount('stderr') === 1) && command.once('stderr', () => {
             let task = rtl_task;
             logger.inf?.('connected', task.streamType);
-            this.updateState(task.streamType, 'connected');
+            Restreamer.updateState(task.streamType, 'connected');
             task.beginStaleDetection();
             task.connected = true;
         });
@@ -1522,7 +1521,7 @@ function StrimingTask(streamUrl, streamType) {
     this.streamUrl = streamUrl;
     this.streamType = streamType;
 
-    /** @type {FfmpegCommand.FfmpegCommand} */
+    /** @type {FfmpegCommand} */
     this.command;
 
     // this.progress = Restreamer.data.progresses[streamType]
