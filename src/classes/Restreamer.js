@@ -197,7 +197,7 @@ class Restreamer {
         this.updateState(streamType, 'stopped');
         logger.info('Stop streaming', streamType);
 
-        /** @type {FfmpegCommand.FfmpegCommand} */
+        /** @type {FF} */
         let ffcommand = this.data.processes[streamType];
         if (ffcommand !== null) {
             this.data.processes[streamType] = null;
@@ -283,7 +283,7 @@ class Restreamer {
             execFile('ffprobe', probeArgs, { timeout: config.ffmpeg.probe.timeout, killSignal: 'SIGTERM' }, (err, stdout, stderr) => {
                 if (err) {
                     if (!err.code && err.killed) {
-                        reject("ffprobe timeout");
+                        reject("timeout");
                         return;
                     }
 
@@ -850,10 +850,9 @@ class Restreamer {
      */
     static updateUserAction(streamType, action) {
         let previousAction = this.setUserAction(streamType, action);
+        logger.dbg?.('Set user action from "' + previousAction + '" to "' + action + '"', streamType);
 
         if (previousAction === action) return action;
-
-        logger.dbg?.('Set user action from "' + previousAction + '" to "' + action + '"', streamType);
 
         this.writeToDB();
         this.updateStreamDataOnGui();
@@ -1090,11 +1089,12 @@ class Restreamer {
                 });
         }
 
-        this.data.progresses[task.streamType].frames = 0;
-        this.data.progresses[task.streamType].currentFps = 0;
-        this.data.progresses[task.streamType].currentKbps = 0;
+        task.progress.frames = 0;
+        task.progress.currentFps = 0;
+        task.progress.currentKbps = 0;
 
         (command.listenerCount('stderr') === 1) && command.once('stderr', /**@this {FF} */ function() {
+            /**@type {StrimingTask} */
             let task = this.task;
             logger.inf?.('connected', task.streamType);
             Restreamer.updateState(task.streamType, 'connected');
