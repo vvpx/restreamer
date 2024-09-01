@@ -21,7 +21,7 @@ class apiV1 {
                 'version': version,
                 'update': 'n/a'
             })
-        })
+        });
 
         // this.router.get('/ip', (req, res) => {
         //     res.end(this.#srcData.publicIp);
@@ -42,11 +42,11 @@ class apiV1 {
             };
 
             res.json(response);
-        })
+        });
 
         this.router.get('/process', (req, res) => {
             res.json(process.memoryUsage());
-        })
+        });
 
         this.router.get('/progresses', (req, res) => {
             const progresses = this.#srcData.progresses;
@@ -66,8 +66,8 @@ class apiV1 {
                     // 'target_size': progresses.repeatToOptionalOutput.targetSize,
                     // 'timemark': progresses.repeatToOptionalOutput.timemark
                 }
-            })
-        })
+            });
+        });
     }
 
     /**

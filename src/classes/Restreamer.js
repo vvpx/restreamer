@@ -242,6 +242,7 @@ function getUserAction(streamType) {
  */
 function setUserAction(streamType, action) {
     let previousAction = data.userActions[streamType];
+    logger.dbg?.('Set user action from "' + previousAction + '" to "' + action + '"', streamType);
     data.userActions[streamType] = action;
     return previousAction;
 }
@@ -255,7 +256,6 @@ function setUserAction(streamType, action) {
  */
 function updateUserAction(streamType, action) {
     let previousAction = setUserAction(streamType, action);
-    logger.dbg?.('Set user action from "' + previousAction + '" to "' + action + '"', streamType);
     if (previousAction === action) return action;
 
     writeToDB();
