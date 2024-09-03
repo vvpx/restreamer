@@ -13,7 +13,7 @@ class Timer {
     wait(time) {
         return new Promise(resolve => {
             this.#cb = resolve;
-            this.#id = setTimeout(() => this.#end(true), time);
+            this.#id = this.#id?.refresh() ?? setTimeout(() => this.#end(true), time);
         });
     }
 
@@ -23,14 +23,15 @@ class Timer {
     #end(timer_elpsed) {
         if (this.#cb) {
             this.#cb(timer_elpsed);
-            this.#id = null;
-            this.#cb = null;
+            this.#cb = undefined;
         }
     }
 
     cancell() {
-        this.#id && clearTimeout(this.#id);
-        this.#end(false);
+        if (this.#cb) {
+            this.#id && clearTimeout(this.#id);
+            this.#end(false);
+        }
     }
 }
 
