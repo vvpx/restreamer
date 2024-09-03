@@ -1136,6 +1136,7 @@ function bindWebsocketEvents() {
                         data.addresses.srcAddress = streamUrl;
                         if (task) {
                             task.command?.removeAllListeners();
+                            task.command?.task = undefined;
                             task.command = undefined;
                             task_map.delete(RTL);
                         }
