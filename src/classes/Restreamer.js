@@ -782,6 +782,16 @@ function probeStream(probeArgs, streamType) {
 }
 
 
+function stopClicked(streamType) {
+    if (data.userActions[streamType] === 'stop') {
+        updateState(streamType, 'disconnected');
+        // logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+        return true;
+    }
+    return false;
+}
+
+
 /**
  * @param {StrimingTask} task
 */
@@ -790,10 +800,8 @@ async function getOptions(task) {
     let streamType = task.streamType;
     const url = streamType === RTL ? task.streamUrl : getRTMPStreamUrl();
     const probeArgs = [
-        '-of',
-        'json',
-        '-v',
-        'error',
+        '-of', 'json',
+        '-v', 'error',
         '-show_streams',
         '-show_format'
     ];
@@ -804,15 +812,6 @@ async function getOptions(task) {
     }
 
     probeArgs.push(url);
-
-    const stopClicked = streamType => {
-        if (data.userActions[streamType] === 'stop') {
-            updateState(streamType, 'disconnected');
-            // logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
-            return true;
-        }
-        return false;
-    }
 
     while (!options && !stopClicked(streamType)) {
         options = await probeStream(probeArgs, streamType)
