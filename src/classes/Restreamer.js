@@ -20,7 +20,7 @@ const RsData = require("./RsData");
 
 const defaultWait = config.ffmpeg.monitor.restart_wait;
 const { timeout_key: probe_tot_key, socket_timeout } = config.ffmpeg.probe;
-const restartTimespan = config.ffmpeg.monitor.restart_wait;
+// const restartTimespan = config.ffmpeg.monitor.restart_wait;
 const db = new JsonDB(new Config(config.jsondb, true, false));
 const data = new RsData();
 
@@ -334,7 +334,7 @@ function stopStream(streamType) {
 
     let task = task_map.get(streamType);
     if (task) {
-        task.cancellProbeRetry();
+        task.cancellRetry();
         // rtl_task.command.removeAllListeners();
         // rtl_task.command = null;
         // rtl_task = null;
@@ -342,26 +342,26 @@ function stopStream(streamType) {
 }
 
 
-/**
- * перезапуск потока
- * @param {StrimingTask} task 
- */
-function retry(task) {
-    logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + restartTimespan + ' ms', task.streamType);
+// /**
+//  * перезапуск потока
+//  * @param {StrimingTask} task 
+//  */
+// function retry(task) {
+//     logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + restartTimespan + ' ms', task.streamType);
 
-    setTimeoutUnsafe(task, 'retry', (t) => {
-        // this.data.timeouts.retry[t.streamType] = null;
+//     setTimeoutUnsafe(task, 'retry', (t) => {
+//         // this.data.timeouts.retry[t.streamType] = null;
 
-        if (data.userActions[t.streamType] === 'stop') {
-            logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-            updateState(task.streamType, 'disconnected');
-            return;
-        }
+//         if (data.userActions[t.streamType] === 'stop') {
+//             logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+//             updateState(task.streamType, 'disconnected');
+//             return;
+//         }
 
-        logger.inf?.(`Retry connect to "${t.streamUrl}"`, t.streamType);
-        startStreamAsync(t);
-    }, restartTimespan);
-}
+//         logger.inf?.(`Retry connect to "${t.streamUrl}"`, t.streamType);
+//         startStreamAsync(t);
+//     }, restartTimespan);
+// }
 
 
 /**
@@ -416,8 +416,8 @@ function buildCommand(task) {
  * @param {StrimingTask} task 
  */
 async function retryAsync(task) {
-    logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + restartTimespan + ' ms', task.streamType);
-    if (await (task.retryTimer ??= new Timer()).wait(restartTimespan)) {
+    logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.retryTime() + ' ms', task.streamType);
+    if (await task.waitRetry()) {
         logger.inf?.(`Retry connect to "${task.streamUrl}"`, task.streamType);
         startStreamAsync(task);
     }
@@ -517,35 +517,35 @@ function addStreamOptions(command, name, replace) {
 }
 
 
-function checkForUpdates() {
-    logger.info('Update checking disabled, skip...');
+// function checkForUpdates() {
+//     logger.info('Update checking disabled, skip...');
 
-    // const url = {'host': 'datarhei.com', 'path': '/apps.json'}
-    // logger.dbg?.('Checking for updates...', 'checkForUpdates')
-    // https.get(url, (response) => {
-    //     if (response.statusCode === 200) {
-    //         response.on('data', (body) => {
-    //             var updateCheck = JSON.parse(body)
-    //             var updateAvailable = require('semver').lt(packageJson.version, updateCheck.restreamer.version)
-    //             logger.info(`Update checking succeeded. ${updateAvailable ? 'Update' : 'No updates'} available`, 'checkForUpdates')
-    //             logger.dbg?.(`local: ${packageJson.version}; remote: ${updateCheck.restreamer.version}`, 'checkForUpdates')
-    //             Restreamer.data.updateAvailable = updateAvailable
-    //             WebsocketsController.emit('update', updateAvailable)
-    //         })
-    //     } else {
-    //         logger.warn(`Got ${String(response.statusCode)} status while trying to fetch update info`, 'checkForUpdates')
-    //     }
-    // }).on('error', () => {
-    //     logger.warn('Failed fetching update info', 'checkForUpdates')
-    // })
-    // setTimeout(Restreamer.checkForUpdates, 12 * 3600 * 1000)
-}
+//     // const url = {'host': 'datarhei.com', 'path': '/apps.json'}
+//     // logger.dbg?.('Checking for updates...', 'checkForUpdates')
+//     // https.get(url, (response) => {
+//     //     if (response.statusCode === 200) {
+//     //         response.on('data', (body) => {
+//     //             var updateCheck = JSON.parse(body)
+//     //             var updateAvailable = require('semver').lt(packageJson.version, updateCheck.restreamer.version)
+//     //             logger.info(`Update checking succeeded. ${updateAvailable ? 'Update' : 'No updates'} available`, 'checkForUpdates')
+//     //             logger.dbg?.(`local: ${packageJson.version}; remote: ${updateCheck.restreamer.version}`, 'checkForUpdates')
+//     //             Restreamer.data.updateAvailable = updateAvailable
+//     //             WebsocketsController.emit('update', updateAvailable)
+//     //         })
+//     //     } else {
+//     //         logger.warn(`Got ${String(response.statusCode)} status while trying to fetch update info`, 'checkForUpdates')
+//     //     }
+//     // }).on('error', () => {
+//     //     logger.warn('Failed fetching update info', 'checkForUpdates')
+//     // })
+//     // setTimeout(Restreamer.checkForUpdates, 12 * 3600 * 1000)
+// }
 
 
-function getPublicIp() {
-    logger.info('Retrieving public IP ...', 'publicIP');
-    data.publicIp = '127.0.0.1';
-}
+// function getPublicIp() {
+//     logger.info('Retrieving public IP ...', 'publicIP');
+//     data.publicIp = '127.0.0.1';
+// }
 
 
 /**
@@ -829,11 +829,12 @@ async function getOptions(task) {
         }
 
         if (!options) {
-            logger.dbg?.(`Try spawn ffprobe in ${task.probeRetryTime()} ms`, streamType);
-            await task.waitProbeRetry();
+            logger.dbg?.(`Try spawn ffprobe in ${task.retryTime()} ms`, streamType);
+            await task.waitRetry();
         }
     }
 
+    task.retryTimer?.reset();
     return options;
 }
 
@@ -851,7 +852,7 @@ async function startStreamAsync(task, force) {
     if (!force) {
         const state = getState(task.streamType);
         if (state == 'connected' || state == 'connecting') {
-            logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType);
+            logger.dbg?.(`Skip "startStream" because state is "${state}".`, task.streamType);
             return;
         }
     }
@@ -958,6 +959,7 @@ async function startStreamAsync(task, force) {
         let task = this.task;
         logger.inf?.('connected', task.streamType);
         updateState(task.streamType, 'connected');
+        task.retryTimer?.reset();
         task.beginStaleDetection();
         task.connected = true;
     });
@@ -966,152 +968,152 @@ async function startStreamAsync(task, force) {
 }
 
 
-/**
- * 
- * @param {StrimingTask} task 
- * @param {boolean} [force]
- * @returns 
- */
-function startStream(task, force) {
-    // remove any running timeouts
-    rsSetTimeout(task.streamType, 'retry', null);
-    rsSetTimeout(task.streamType, 'stale', null);
+// /**
+//  * 
+//  * @param {StrimingTask} task 
+//  * @param {boolean} [force]
+//  * @returns 
+//  */
+// function startStream(task, force) {
+//     // remove any running timeouts
+//     rsSetTimeout(task.streamType, 'retry', null);
+//     rsSetTimeout(task.streamType, 'stale', null);
 
-    if (!force) {
-        // check if there's currently no other stream connected or connecting
-        let state = getState(task.streamType);
-        if (state == 'connected' || state == 'connecting') {
-            logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType);
-            return;
-        }
-    }
+//     if (!force) {
+//         // check if there's currently no other stream connected or connecting
+//         let state = getState(task.streamType);
+//         if (state == 'connected' || state == 'connecting') {
+//             logger.dbg?.(`Skipping "startStream" because state is "${state}".`, task.streamType);
+//             return;
+//         }
+//     }
 
-    // check if the user has clicked 'stop' meanwhile, so the startStream process has to be skipped
-    if (getUserAction(task.streamType) == 'stop') {
-        stopStream(task.streamType);
-        logger.dbg?.('Skipping "startStream" because "stop" has been clicked', task.streamType);
-        return;
-    }
+//     // check if the user has clicked 'stop' meanwhile, so the startStream process has to be skipped
+//     if (getUserAction(task.streamType) == 'stop') {
+//         stopStream(task.streamType);
+//         logger.dbg?.('Skipping "startStream" because "stop" has been clicked', task.streamType);
+//         return;
+//     }
 
-    logger.inf?.('Start streaming', task.streamType);
-    updateState(task.streamType, 'connecting');
+//     logger.inf?.('Start streaming', task.streamType);
+//     updateState(task.streamType, 'connecting');
 
-    const retry = () => {
-        logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
-        rsSetTimeout(task.streamType, 'retry', () => {
-            if (data.userActions[task.streamType] == 'stop') {
-                logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-                updateState(task.streamType, 'disconnected');
-                return;
-            }
+//     const retry = () => {
+//         logger.inf?.('Schedule connect to "' + task.streamUrl + '" in ' + task.restart_wait + ' ms', task.streamType);
+//         rsSetTimeout(task.streamType, 'retry', () => {
+//             if (data.userActions[task.streamType] == 'stop') {
+//                 logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+//                 updateState(task.streamType, 'disconnected');
+//                 return;
+//             }
 
-            logger.inf?.('Retry to connect to "' + task.streamUrl + '"', task.streamType);
-            startStream(task);
-        }, task.restart_wait);
-        task.restart_wait += 100;
-    };
+//             logger.inf?.('Retry to connect to "' + task.streamUrl + '"', task.streamType);
+//             startStream(task);
+//         }, task.restart_wait);
+//         task.restart_wait += 100;
+//     };
 
-    getOptions(task).then((options) => {
-        if (options === null) return;
+//     getOptions(task).then((options) => {
+//         if (options === null) return;
 
-        task.connected = false;
-        const command = buildCommand(task);
+//         task.connected = false;
+//         const command = buildCommand(task);
 
-        const replace_video = {
-            videoid: data.options.video.id,
-            preset: data.options.video.preset,
-            bitrate: data.options.video.bitrate,
-            fps: data.options.video.fps,
-            gop: (parseInt(data.options.video.fps) * 2) + '',
-            profile: data.options.video.profile,
-            tune: data.options.video.tune
-        }
+//         const replace_video = {
+//             videoid: data.options.video.id,
+//             preset: data.options.video.preset,
+//             bitrate: data.options.video.bitrate,
+//             fps: data.options.video.fps,
+//             gop: (parseInt(data.options.video.fps) * 2) + '',
+//             profile: data.options.video.profile,
+//             tune: data.options.video.tune
+//         }
 
-        for (let o in options.video)
-            if (o.length) addStreamOptions(command, options.video[o], replace_video);
+//         for (let o in options.video)
+//             if (o.length) addStreamOptions(command, options.video[o], replace_video);
 
-        const replace_audio = {
-            audioid: data.options.audio.id,
-            bitrate: data.options.audio.bitrate,
-            channels: data.options.audio.channels,
-            sampling: data.options.audio.sampling
-        }
+//         const replace_audio = {
+//             audioid: data.options.audio.id,
+//             bitrate: data.options.audio.bitrate,
+//             channels: data.options.audio.channels,
+//             sampling: data.options.audio.sampling
+//         }
 
-        for (let o in options.audio)
-            if (o.length) addStreamOptions(command, options.audio[o], replace_audio);
+//         for (let o in options.audio)
+//             if (o.length) addStreamOptions(command, options.audio[o], replace_audio);
 
-        command
-            .on('start', (commandLine) => {
-                task.reset();
-                data.processes[task.streamType] = command;
+//         command
+//             .on('start', (commandLine) => {
+//                 task.reset();
+//                 data.processes[task.streamType] = command;
 
-                if (data.userActions[task.streamType] == 'stop') {
-                    stopStream(task.streamType);
-                    logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', task.streamType);
-                    return;
-                }
+//                 if (data.userActions[task.streamType] == 'stop') {
+//                     stopStream(task.streamType);
+//                     logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', task.streamType);
+//                     return;
+//                 }
 
-                logger.dbg?.('Spawned: ' + commandLine, task.streamType);
-            })
-            .on('end', () => {
-                data.processes[task.streamType] = null;
-                rsSetTimeout(task.streamType, 'retry', null);
-                rsSetTimeout(task.streamType, 'stale', null);
-                data.progresses[task.streamType].currentFps = 0;
-                data.progresses[task.streamType].currentKbps = 0;
+//                 logger.dbg?.('Spawned: ' + commandLine, task.streamType);
+//             })
+//             .on('end', () => {
+//                 data.processes[task.streamType] = null;
+//                 rsSetTimeout(task.streamType, 'retry', null);
+//                 rsSetTimeout(task.streamType, 'stale', null);
+//                 data.progresses[task.streamType].currentFps = 0;
+//                 data.progresses[task.streamType].currentKbps = 0;
 
-                updateState(task.streamType, 'stopped');
+//                 updateState(task.streamType, 'stopped');
 
-                if (data.userActions[task.streamType] == 'stop') {
-                    updateState(task.streamType, 'disconnected');
-                    logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
-                    return;
-                }
+//                 if (data.userActions[task.streamType] == 'stop') {
+//                     updateState(task.streamType, 'disconnected');
+//                     logger.dbg?.('Skipping retry because "stop" has been clicked', task.streamType);
+//                     return;
+//                 }
 
-                logger.inf?.(task.streamType + ': ended normally');
-                retry();
-            })
-            .on('error', error => {
-                data.processes[task.streamType] = null;
-                rsSetTimeout(task.streamType, 'retry', null);
-                rsSetTimeout(task.streamType, 'stale', null);
-                data.progresses[task.streamType].currentFps = 0;
-                data.progresses[task.streamType].currentKbps = 0;
+//                 logger.inf?.(task.streamType + ': ended normally');
+//                 retry();
+//             })
+//             .on('error', error => {
+//                 data.processes[task.streamType] = null;
+//                 rsSetTimeout(task.streamType, 'retry', null);
+//                 rsSetTimeout(task.streamType, 'stale', null);
+//                 data.progresses[task.streamType].currentFps = 0;
+//                 data.progresses[task.streamType].currentKbps = 0;
 
-                if (data.userActions[task.streamType] == 'stop') {
-                    updateState(task.streamType, 'disconnected');
-                    logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
-                    return;
-                }
+//                 if (data.userActions[task.streamType] == 'stop') {
+//                     updateState(task.streamType, 'disconnected');
+//                     logger.dbg?.('Skipping retry since "stop" has been clicked', task.streamType);
+//                     return;
+//                 }
 
-                // logger.error(error.message, task.streamType);
-                logger.error(error.toString(), task.streamType);
-                updateState(task.streamType, 'error', error.toString());
-                retry();
-            })
-            .on('progress', (progress) => {
-                if (!task.connected && data.states[task.streamType].type == 'connecting') {
-                    updateState(task.streamType, 'connected');
-                    task.connected = true;
-                }
+//                 // logger.error(error.message, task.streamType);
+//                 logger.error(error.toString(), task.streamType);
+//                 updateState(task.streamType, 'error', error.toString());
+//                 retry();
+//             })
+//             .on('progress', (progress) => {
+//                 if (!task.connected && data.states[task.streamType].type == 'connecting') {
+//                     updateState(task.streamType, 'connected');
+//                     task.connected = true;
+//                 }
 
-                // compare the current number of frames
-                if (task.nFrames != progress.frames) {
-                    task.nFrames = progress.frames;
-                    // add/reset a stale timeout if the number of frames changed
-                    rsSetTimeout(task.streamType, 'stale', () => {
-                        logger.warn('Stale connection', task.streamType);
-                        stopStream(task.streamType);
-                    }, config.ffmpeg.monitor.stale_wait);
-                }
+//                 // compare the current number of frames
+//                 if (task.nFrames != progress.frames) {
+//                     task.nFrames = progress.frames;
+//                     // add/reset a stale timeout if the number of frames changed
+//                     rsSetTimeout(task.streamType, 'stale', () => {
+//                         logger.warn('Stale connection', task.streamType);
+//                         stopStream(task.streamType);
+//                     }, config.ffmpeg.monitor.stale_wait);
+//                 }
 
-                data.progresses[task.streamType] = progress;
-                updateProgressOnGui();
-            });
+//                 data.progresses[task.streamType] = progress;
+//                 updateProgressOnGui();
+//             });
 
-        command.run();
-    });
-}
+//         command.run();
+//     });
+// }
 
 
 /**bind websocket events on application start*/
@@ -1211,31 +1213,25 @@ function StrimingTask(streamUrl, streamType) {
 
     /**Current number of processed frames for stale detection @type {number}*/
     this.nFrames;
-
-    /**Reconnect period (ms) @type {number}*/
-    this.restart_wait;
     this.intervalId;
     this.prevnFrame;
 
     /** @type {rtimer} */
-    this.probeRetryTimer;
-
-    /** @type {Timer} */
     this.retryTimer;
 
     this.reset();
 }
 
-StrimingTask.prototype.cancellProbeRetry = function () {
-    if (this.probeRetryTimer) {
-        logger.inf?.('Try cancell probe retry timer', this.streamType);
-        this.probeRetryTimer.cancell();
-        this.probeRetryTimer = null;
+StrimingTask.prototype.cancellRetry = function () {
+    if (this.retryTimer) {
+        logger.inf?.('Try cancell retry timer', this.streamType);
+        this.retryTimer.cancell();
+        this.retryTimer = null;
     }
 };
 
-StrimingTask.prototype.waitProbeRetry = function () {
-    return (this.probeRetryTimer ??= new rtimer(this.restart_wait, 88)).wait();
+StrimingTask.prototype.waitRetry = function () {
+    return (this.retryTimer ??= new rtimer(defaultWait, 88)).wait();
 };
 
 StrimingTask.prototype.beginStaleDetection = function () {
@@ -1254,7 +1250,6 @@ StrimingTask.prototype.reset = function () {
     this.connected = false;
     this.nFrames = 0;
     this.prevnFrame = 0;
-    this.restart_wait = defaultWait;
 
     if (this.intervalId) {
         logger.dbg?.(`Clear stale interval`, this.streamType);
@@ -1262,14 +1257,11 @@ StrimingTask.prototype.reset = function () {
         this.intervalId = undefined;
     }
 
-    if (this.probeRetryTimer)
-        this.probeRetryTimer = null;
-
     return this;
 };
 
-StrimingTask.prototype.probeRetryTime = function () {
-    return this.probeRetryTimer?.current ?? this.restart_wait;
+StrimingTask.prototype.retryTime = function () {
+    return this.retryTimer?.current ?? defaultWait;
 };
 
 
