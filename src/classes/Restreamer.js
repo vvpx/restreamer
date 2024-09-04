@@ -901,7 +901,7 @@ async function startStreamAsync(task, force) {
                 logger.dbg?.('Spawned: ' + commandLine, streamType);
 
                 if (data.userActions[streamType] === 'stop') {
-                    logger.dbg?.('Skipping on "start" event of FFmpeg command because "stop" has been clicked', streamType);
+                    logger.dbg?.('Stop on the "start" event', streamType);
                     stopStream(streamType);
                 }
             })
@@ -912,7 +912,7 @@ async function startStreamAsync(task, force) {
                 logger.inf?.(streamType + ': ended normally');
 
                 if (data.userActions[streamType] === 'stop') {
-                    logger.dbg?.('Skipping retry because "stop" has been clicked', streamType);
+                    logger.dbg?.('Skip retry because "stop" has been clicked', streamType);
                     updateState(streamType, 'disconnected');
                     return;
                 }
@@ -925,7 +925,7 @@ async function startStreamAsync(task, force) {
                 data.processes[t.streamType] = null;
 
                 if (data.userActions[t.streamType] === 'stop') {
-                    logger.dbg?.('Skipping retry since "stop" has been clicked', t.streamType);
+                    logger.dbg?.('Skip retry since "stop" has been clicked', t.streamType);
                     updateState(t.streamType, 'disconnected');
                     return;
                 }
@@ -1136,9 +1136,11 @@ function bindWebsocketEvents() {
                     if (streamUrl !== data.addresses.srcAddress) {
                         data.addresses.srcAddress = streamUrl;
                         if (task) {
-                            task.command?.removeAllListeners();
-                            task.command?.task = undefined;
-                            task.command = undefined;
+                            if (task.command) {
+                                task.command.removeAllListeners();
+                                task.command.task = undefined;
+                                task.command = undefined;
+                            }
                             task_map.delete(RTL);
                         }
                         task = new StrimingTask(streamUrl, RTL);
