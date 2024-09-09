@@ -24,8 +24,8 @@ if (process.env.RS_DEBUG?.toString() === "true") {
     logger.info('Debugging enabled. Check the /debug path in the web interface.');
 }
 
-const nginxrtmp = require('./classes/Nginxrtmp')();
 const app = require('./webserver/app');
+const nginx = require('./classes/Nginxrtmp');
 const Restreamer = require('./classes/Restreamer');
 
 require('node:child_process')
@@ -39,7 +39,7 @@ require('node:child_process')
         app.startWebserver(Restreamer.data)
             .then(() => {
                 Restreamer.bindWebsocketEvents();
-                return nginxrtmp.start(process.env.RS_HTTPS === "true");
+                return nginx.start(process.env.RS_HTTPS === "true", logger);
             })
             .then(() => {
                 return Restreamer.restoreProcesses();
@@ -56,9 +56,9 @@ require('node:child_process')
 process.on('SIGTERM', () => {
     logger.info('Receive SIGTERM signal');
     Restreamer.close();
-    nginxrtmp.close();
+    nginx.close();
     app.server?.close(err => {
         if (err) return logger.error(err.message, err.name);
         logger.stdout('MAIN', 'app closed succefully');
     });
-})
+});
