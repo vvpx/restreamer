@@ -54,29 +54,29 @@ class RaisingTimer extends Timer {
     }
 }
 
-async function Test() {
-    const t = new RaisingTimer(1000, 1000);
-    let old = Date.now();
-    let cnt = 0;
+// async function Test() {
+//     const t = new RaisingTimer(1000, 1000);
+//     let old = Date.now();
+//     let cnt = 0;
 
-    while (cnt < 3) {
-        let result = await t.wait();
-        let now = Date.now();
-        console.log(result, now - old);
-        old = now;
-        cnt += 1;
-    }
+//     while (cnt < 3) {
+//         let result = await t.wait();
+//         let now = Date.now();
+//         console.log(result, now - old);
+//         old = now;
+//         cnt += 1;
+//     }
 
-    let ct = new Timer();
-    let p = t.wait();
-    await ct.wait(1500);
-    t.cancell();
-    console.log(await p, Date.now() - old);
-    return 'test finished';
-}
+//     let ct = new Timer();
+//     let p = t.wait();
+//     await ct.wait(1500);
+//     t.cancell();
+//     console.log(await p, Date.now() - old);
+//     return 'test finished';
+// }
 
-if (require.main === module) {
-    Test().then((result) => console.log(result));
-}
+// if (require.main === module) {
+//     Test().then((result) => console.log(result));
+// }
 
 module.exports = { Timer, RaisingTimer };
