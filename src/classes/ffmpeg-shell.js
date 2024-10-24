@@ -1,4 +1,5 @@
 'use strict'
+
 const { EventEmitter } = require('node:events');
 const { spawn, ChildProcess } = require('node:child_process');
 
@@ -64,7 +65,7 @@ class ffmpegShell extends EventEmitter {
             .setEncoding('utf8')
             // .once('data'), (data) => this.emit('start')
             .on('data', (data) => this.emit('stderr', data));
-        this.emit('start');
+        this.emit('start', 'ffmpeg ' + args.join(' '));
     }
 
     abort() {

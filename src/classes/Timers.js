@@ -1,3 +1,4 @@
+'use strict';
 
 
 class Timer {
@@ -13,7 +14,7 @@ class Timer {
         return new Promise(resolve => {
             this.#cb = resolve;
             this.#id = setTimeout(() => this.#end(true), time);
-        })
+        });
     }
 
     /**

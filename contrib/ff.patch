@@ -215,7 +215,7 @@ diff -wa -u orig/recipes.js ./recipes.js
      }
 diff -wa -u orig/utils.js ./utils.js
 --- orig/utils.js	2024-07-09 13:06:48.860760406 +0700
-+++ ./utils.js	2024-08-01 18:20:02.115097450 +0700
++++ ./utils.js	2024-08-24 08:19:10.090298618 +0700
 @@ -1,7 +1,7 @@
  /*jshint node:true*/
  'use strict';
@@ -225,45 +225,102 @@ diff -wa -u orig/utils.js ./utils.js
  var isWindows = require('os').platform().match(/win(32|64)/);
  var which = require('which');
  
-@@ -377,14 +377,17 @@
+@@ -40,6 +40,67 @@
+   return progress;
+ }
+ 
++class ring {
++  cbs = [];
++  /**@type {Array.<string>} */ lines = [];
++  current = '';
++  closed = false;
++
++  constructor(maxLines) {
++    this.max = maxLines - 1;
++  }
++
++  emit(line) {
++    for (let cb of this.cbs) cb(line);
++    this.max && this.lines.push(line);
++  }
++
++  callback(cb) {
++    for (let line of this.lines) cb(line);
++    this.cbs.push(cb);
++  }
++
++  /**@param {Buffer} chunk*/
++  append(chunk) {
++    if (this.closed) return;
++    for (let i = 0; i < chunk.length; i++) if (chunk[i] == 13) chunk[i] = 10;
++
++    let newLines = chunk.toString().split('\n');
++    this.current += newLines.shift();
++
++    if (newLines.length > 0) {
++      this.emit(this.current);
++      this.current = newLines.pop();
++      for (let line of newLines) this.emit(line);
++
++      if (this.max > 0 && this.lines.length > this.max) {
++        this.lines.splice(0, this.lines.length - this.max);
++      }
++    }
++  }
++
++  get() {
++    if (this.current) {
++      return this.lines.concat([this.current]).join('\n');
++    } else {
++      return this.lines.join('\n');
++    }
++  }
++
++  *enumerate() {
++    for (let line of lines) yield line;
++    if (this.current) yield this.current;
++  }
++
++  close() {
++    if (!this.closed) {
++      this.closed = true;
++      this.current && this.emit(this.current);
++      this.current = '';
++      if (this.max > 0 && this.lines.length > this.max) this.lines.shift();
++    }
++  }
++}
+ 
+ var utils = module.exports = {
+   isWindows: isWindows,
+@@ -376,80 +437,5 @@
+    *
     * @param {Numebr} maxLines maximum number of lines to store (<= 0 for unlimited)
     */
-   linesRing: function(maxLines) {
+-  linesRing: function(maxLines) {
 -    var cbs = [];
 -    var lines = [];
 -    var current = null;
 -    var closed = false
 -    var max = maxLines - 1;
-+    const cbs = [];
-+    /**@type {Array.<string>} */ let lines = [];
-+    let current = '';
-+    let closed = false;
-+    const max = maxLines - 1;
-+    // (() => console.log(`linesRing: ${max}`))();
- 
-     function emit(line) {
+-
+-    function emit(line) {
 -      cbs.forEach(function(cb) { cb(line); });
-+      // cbs.forEach(function (cb) { cb(line); });
-+      for (const cb of cbs) cb(line);
-+      max && lines.push(line);
-     }
- 
-     return {
-@@ -393,63 +396,47 @@
-         cbs.push(cb);
-       },
- 
+-    }
+-
+-    return {
+-      callback: function(cb) {
+-        lines.forEach(function(l) { cb(l); });
+-        cbs.push(cb);
+-      },
+-
 -      append: function(str) {
-+      append: /**@param {Buffer} chunk*/ function (chunk) {
-         if (closed) return;
+-        if (closed) return;
 -        if (str instanceof Buffer) str = '' + str;
 -        if (!str || str.length === 0) return;
-+        for (let i = 0; i < chunk.length; i++) if (chunk[i] == 13) chunk[i] = 10;
- 
+-
 -        var newLines = str.split(nlRegexp);
-+        const newLines = chunk.toString().split('\n');
-+        current += newLines.shift();
- 
+-
 -        if (newLines.length === 1) {
 -          if (current !== null) {
 -            current = current + newLines.shift();
@@ -273,61 +330,48 @@ diff -wa -u orig/utils.js ./utils.js
 -        } else {
 -          if (current !== null) {
 -            current = current + newLines.shift();
-+        if (newLines.length > 0) {
-             emit(current);
+-            emit(current);
 -            lines.push(current);
 -          }
 -
-           current = newLines.pop();
-+          newLines.forEach(emit);
- 
+-          current = newLines.pop();
+-
 -          newLines.forEach(function(l) {
 -            emit(l);
 -            lines.push(l);
 -          });
 -
 -          if (max > -1 && lines.length > max) {
-+          if (max > 0 && lines.length > max) {
-             lines.splice(0, lines.length - max);
-           }
-         }
-       },
- 
-       get: function() {
+-            lines.splice(0, lines.length - max);
+-          }
+-        }
+-      },
+-
+-      get: function() {
 -        if (current !== null) {
-+        if (current) {
-           return lines.concat([current]).join('\n');
-         } else {
-           return lines.join('\n');
-         }
-       },
- 
+-          return lines.concat([current]).join('\n');
+-        } else {
+-          return lines.join('\n');
+-        }
+-      },
+-
 -      close: function() {
 -        if (closed) return;
-+      enumerate: function* () {
-+        for (const line of lines) yield line;
-+        if (current) yield current;
-+      },
- 
+-
 -        if (current !== null) {
 -          emit(current);
 -          lines.push(current);
-+      close: function () {
-+        if (!closed) {
-+          closed = true;
-+          current && emit(current);
-+          current = '';
- 
+-
 -          if (max > -1 && lines.length > max) {
 -            lines.shift();
-+          if (max > 0 && lines.length > max) lines.shift();
-           }
+-          }
 -
 -          current = null;
-         }
- 
+-        }
+-
 -        closed = true;
 -      }
-     };
-   }
+-    };
+-  }
++  linesRing: (maxLines) => new ring(maxLines)
  };

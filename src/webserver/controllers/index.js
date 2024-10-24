@@ -15,39 +15,39 @@ module.exports = app => {
             success = true;
         } else {
             message = 'login_invalid';
-            req.session.destroy()
+            req.session.destroy();
             success = false;
         }
 
         res.json({
             'success': success,
             'message': message
-        })
-    })
+        });
+    });
 
     app.get('/authenticated', (req, res) => {
-        res.json(req.session.authenticated === true)
-    })
+        res.json(req.session.authenticated === true);
+    });
 
     app.get('/logout', (req, res) => {
-        req.session.destroy()
-        res.end()
-    })
+        req.session.destroy();
+        res.end();
+    });
 
     /* Handle NGINX-RTMP token */
     app.get('/token', (req, res) => {
         const token = process.env.RS_TOKEN || auth.token;
         if (token != '') {
             if (req.query.token == token) {
-                res.writeHead(200, { 'Content-Type': 'text/plain' })
-                res.end('Authorized')
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('Authorized');
             } else {
-                res.writeHead(401, { 'Content-Type': 'text/plain' })
-                res.end('Unauthorized')
+                res.writeHead(401, { 'Content-Type': 'text/plain' });
+                res.end('Unauthorized');
             }
         } else {
-            res.writeHead(200, { 'Content-Type': 'text/plain' })
-            res.end('Authorized')
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('Authorized');
         }
-    })
+    });
 }

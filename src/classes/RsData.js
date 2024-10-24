@@ -8,6 +8,7 @@ function RsData() {
 
     this.timeouts = {
         retry: {
+            /**@type {NodeJS.Timeout} */
             repeatToLocalNginx: null,
             repeatToOptionalOutput: null
         },

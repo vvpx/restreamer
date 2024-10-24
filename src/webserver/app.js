@@ -131,7 +131,7 @@ class RestreamerExpressApp {
                 if (err) return next(new Error(err));
                 if (!authorized) return next(new Error("Not authorized"));
                 next();
-            })
+            });
         })
     }
 

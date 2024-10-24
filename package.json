@@ -1,12 +1,12 @@
 {
   "type": "commonjs",
   "name": "restreamer",
-  "version": "0.7.10",
+  "version": "0.7.12",
   "description": "Allows you to do h.264 video streaming on your website without a streaming provider",
   "author": "datarhei.org",
   "repository": {
     "type": "git",
-    "url": "git://github.com/datarhei/restreamer.git"
+    "url": "https://github.com/vvpx/restreamer.git"
   },
   "license": "Apache-2.0",
   "scripts": {
@@ -26,7 +26,7 @@
     "@babel/core": "^7.21.0",
     "@babel/preset-env": "^7.20.2",
     "babel-plugin-angularjs-annotate": "^0.10.0",
-    "eslint": "^8.56.0",
+    "eslint": "^9.0.0",
     "grunt": "^1.4.0",
     "grunt-babel": "8.0.0",
     "grunt-contrib-concat": "^2.1.0",

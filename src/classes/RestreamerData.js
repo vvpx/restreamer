@@ -173,7 +173,7 @@ class RestreamerData {
                             tune: 'none'
                         },
                         audio: {
-                            codec: 'auto',
+                            codec: 'none',
                             preset: 'silence',
                             bitrate: '64',
                             channels: 'mono',

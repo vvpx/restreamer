@@ -51,7 +51,7 @@ class Nginxrtmp {
 
         this.process.stdout.on('data', data => logger.info(data));
 
-        this.process.stderr.on('data', data => logger.error(data, false));
+        this.process.stderr.on('data', data => logger.error(data, ''));
 
         this.process.on('close', code => {
             abort = true;
