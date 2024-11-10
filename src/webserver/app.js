@@ -132,7 +132,7 @@ class RestreamerExpressApp {
                 if (!authorized) return next(new Error("Not authorized"));
                 next();
             });
-        })
+        });
     }
 
     /**
@@ -148,7 +148,7 @@ class RestreamerExpressApp {
         return new Promise(resolve => {
             const server = this.server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
                 this.app.set("io", new Server(server, { path: "/socket.io" }));
-                this.secureSockets();
+                // this.secureSockets();
                 this.app.set("server", server.address());
                 logger.inf?.("Running on port " + process.env.RS_NODEJS_PORT);
                 resolve();
