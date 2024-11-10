@@ -1211,7 +1211,6 @@ function StrimingTask(streamUrl, streamType) {
 
     /**@type {boolean} */
     this.connected;
-    this.once = false;
 
     /**Current number of processed frames for stale detection @type {number}*/
     this.nFrames;

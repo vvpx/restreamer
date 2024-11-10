@@ -61,4 +61,5 @@ process.on('SIGTERM', () => {
         if (err) return logger.error(err.message, err.name);
         logger.stdout('MAIN', 'app closed succefully');
     });
+    app.server?.closeAllConnections();
 });
