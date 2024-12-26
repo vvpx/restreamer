@@ -63,7 +63,11 @@ class ffmpegShell extends EventEmitter {
 
         this.ffmpegProc = spawn('/usr/local/bin/ffmpeg', args)
             .on('error', (err) => { this.emit('error', err) })
-            .on('close', (err, signal) => { err ? this.emit('error', err) : this.emit('end') });
+            .on('close', (code, signal) => {
+                signal ?
+                this.emit('error', new Error(`ffmpeg terminated by ${signal}`)) :
+                (code == 0 ? this.emit('end') : this.emit('error', new Error(`ffmpeg exit code: ${code}`)))
+            });
 
         this.ffmpegProc.stderr
             .setEncoding('utf8')
@@ -73,7 +77,7 @@ class ffmpegShell extends EventEmitter {
     }
 
     abort() {
-        console.log('ffmpegShell::abort', signal);
+        console.log('ffmpegShell::abort');
         return this.ffmpegProc = this.ffmpegProc?.kill() ? null : this.ffmpegProc;
     }
 
