@@ -36,7 +36,7 @@ class Logger {
      * @returns {string}
      */
     format(type, message, context) {
-        return `[${new Date().toISOString().slice(0, 19)}] [${type.padEnd(5)}] [${context ?? this.context}] ${message}\n`;
+        return `[${new Date().toISOString().slice(0, 19)}] [${type}] [${context ?? this.context}] ${message}\n`;
     }
 
     /**
