@@ -22,6 +22,7 @@ class ffmpegShell extends EventEmitter {
         this._oputput = '';
         this._inputOptions = [];
         this._outputOptions = [];
+        this.ffmpegProc = null;
     }
 
 
@@ -62,31 +63,44 @@ class ffmpegShell extends EventEmitter {
         // console.log('start ffmpeg with args: ', args);
 
         this.ffmpegProc = spawn('/usr/local/bin/ffmpeg', args)
-            .on('error', (err) => { this.emit('error', err) })
+            .on('spawn', () => this.emit('start', 'ffmpeg ' + args.join(' ')))
+            .on('error', (err) => this.emit('error', err))
             .on('close', (code, signal) => {
                 signal ?
-                this.emit('error', new Error(`ffmpeg terminated by ${signal}`)) :
-                (code == 0 ? this.emit('end') : this.emit('error', new Error(`ffmpeg exit code: ${code}`)))
+                    this.emit('error', new Error(`ffmpeg terminated by ${signal}`)) :
+                    (code == 0 ? this.emit('end') : this.emit('error', new Error(`ffmpeg exit code: ${code}`)));
+                this.ffmpegProc.removeAllListeners();
             });
 
         this.ffmpegProc.stderr
-            .setEncoding('utf8')
-            // .once('data'), (data) => this.emit('start')
+            .setEncoding('ascii') //utf8
             .on('data', (data) => this.emit('stderr', data));
-        this.emit('start', 'ffmpeg ' + args.join(' '));
+    }
+
+    isRunning() {
+        return (this.ffmpegProc !== null) && (this.ffmpegProc.exitCode === null);
+    }
+
+    get exitcode() {
+        return this.ffmpegProc?.exitCode;
     }
 
     abort() {
-        console.log('ffmpegShell::abort');
-        return this.ffmpegProc = this.ffmpegProc?.kill() ? null : this.ffmpegProc;
+        return this.kill('SIGTERM');
     }
 
     kill(signal) {
-        console.log('ffmpegShell::kill', signal);
-        return this.ffmpegProc = this.ffmpegProc?.kill(signal) ? null : this.ffmpegProc;
+        return this.isRunning() && this.ffmpegProc.kill(signal);
+    }
+
+    reset() {
+        this.kill();
+        this.dispose();
+        return this;
     }
 
     dispose() {
+        this.task = null;
         this.ffmpegProc = null;
         this._inputOptions.length = 0;
         this._outputOptions.length = 0;
