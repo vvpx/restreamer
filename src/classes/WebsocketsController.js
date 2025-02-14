@@ -52,5 +52,6 @@ function setConnectCallback(callback) {
 module.exports = {
     emit,
     emitOnConnections: () => connections > 0 ? emit : null,
-    setConnectCallback
+    setConnectCallback,
+    close: () => io?.close()
 };
