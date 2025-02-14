@@ -1,10 +1,14 @@
 'use strict';
 
-const { Router } = require('express');
-const version = globalThis.appVersion;
-const replace = /\?token=[^\s]+/;
-
 /**@typedef {import("../../../classes/RsData")} RsData restreamer data*/
+
+const { Router } = require('express');
+const replace = /\?token=[^\s]+/;
+const version = {
+    'version': globalThis.appVersion,
+    'update': 'n/a'
+};
+
 
 class apiV1 {
     router;
@@ -16,12 +20,7 @@ class apiV1 {
         this.#srcData = srcData;
         this.router = Router();
 
-        this.router.get('/version', (req, res) => {
-            res.json({
-                'version': version,
-                'update': 'n/a'
-            })
-        });
+        this.router.get('/version', (req, res) => res.json(version));
 
         // this.router.get('/ip', (req, res) => {
         //     res.end(this.#srcData.publicIp);
@@ -33,7 +32,7 @@ class apiV1 {
             const response = {
                 'repeat_to_local_nginx': {
                     type: states.repeatToLocalNginx.type,
-                    message: states.repeatToLocalNginx.message.replace(replace, '?token=***'),
+                    message: states.repeatToLocalNginx.message.replace(replace, '?token=***')
                 },
                 'repeat_to_optional_output': {
                     type: states.repeatToOptionalOutput.type,
