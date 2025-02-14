@@ -277,7 +277,12 @@ function updateOptions(options) {
 
 /**send websocket event to GUI to update the state of the streams*/
 function updateStreamDataOnGui() {
-    wsCtrl.emit('updateStreamData', extractDataOfStreams());
+    wsCtrl.emit('updateStreamData', {
+        'addresses': data.addresses,
+        'options': data.options,
+        'userActions': data.userActions,
+        'states': data.states
+    });
 }
 
 
@@ -335,9 +340,6 @@ function stopStream(streamType) {
     let task = task_map.get(streamType);
     if (task) {
         task.cancellRetry();
-        // rtl_task.command.removeAllListeners();
-        // rtl_task.command = null;
-        // rtl_task = null;
     }
 }
 
@@ -792,9 +794,7 @@ function stopClicked(streamType) {
 }
 
 
-/**
- * @param {StrimingTask} task
-*/
+/** @param {StrimingTask} task */
 async function getOptions(task) {
     let options = null;
     let streamType = task.streamType;
@@ -864,6 +864,19 @@ async function startStreamAsync(task, force) {
 
     let command = task.command ?? buildCommand(task);
 
+    // (command.listenerCount('stderr') <= 1) && command.once('stderr', /**@this {FF} */ function () {
+    //     let state = getState();
+    //     if (state !== 'connecting') {
+    //         logger.wrn?.();
+    //     }
+
+    //     /**@type {StrimingTask} */
+    //     let t = this.task;
+    //     logger.inf?.('connected', t.streamType);
+    //     updateState(t.streamType, 'connected');
+    //     t.connected = true;
+    // });
+
     if (!task.command) {
         command.task = task;
         // options: { audio: [ 'audio_codec_none' ], video: [ 'video_codec_copy' ] }
@@ -894,16 +907,19 @@ async function startStreamAsync(task, force) {
             addStreamOptions(command, ao, replace_audio);
 
         task.command = command;
+
         command
             .on('start', function (commandLine) {
-                let streamType = this.task.streamType;
-                data.processes[streamType] ??= this;
-                logger.dbg?.('Spawned: ' + commandLine, streamType);
+                /** @type {StrimingTask} */
+                let t = this.task;
+                data.processes[t.streamType] ??= this;
+                logger.dbg?.('Spawned: ' + commandLine, t.streamType);
+                t.beginStaleDetection();
 
-                if (data.userActions[streamType] === 'stop') {
-                    logger.dbg?.('Stop on the "start" event', streamType);
-                    stopStream(streamType);
-                }
+                // if (data.userActions[streamType] === 'stop') {
+                //     logger.dbg?.('Stop on the "start" event', streamType);
+                //     stopStream(streamType);
+                // }
             })
             .on('end', function () {
                 let t = this.task.reset();
@@ -923,6 +939,7 @@ async function startStreamAsync(task, force) {
             .on('error', function (error) {
                 let t = this.task.reset();
                 data.processes[t.streamType] = null;
+                logger.err?.(error.message, t.streamType);
 
                 if (data.userActions[t.streamType] === 'stop') {
                     logger.dbg?.('Skip retry since "stop" has been clicked', t.streamType);
@@ -930,11 +947,10 @@ async function startStreamAsync(task, force) {
                     return;
                 }
 
-                logger.error(error.message, t.streamType);
                 updateState(t.streamType, 'error', error.message);
                 retryAsync(t);
             })
-            .on('stderr', /** @this {FF} */ function (str) {
+            .on('stderr', /** @this {FF} command @param {string} str*/ function (str) {
                 if (!str.startsWith('frame=')) {
                     logger.wrn?.(`msg: '${str}'`, 'stderr');
                     return;
@@ -942,28 +958,30 @@ async function startStreamAsync(task, force) {
 
                 /**@type {StrimingTask} */
                 let t = this.task;
+
+                if (!t.connected) {
+                    let state = getState(t.streamType);
+                    if (state !== 'connecting') {
+                        logger.wrn?.(`state: ${state}`);
+                        return;
+                    }
+
+                    logger.inf?.('connected', t.streamType);
+                    updateState(t.streamType, 'connected');
+                    t.connected = true;
+                }
+
                 let p = t.progress; // data.progresses[t.streamType];
                 let n = parseInt(str.slice(6), 10);
                 p.currentFps = (n - p.frames) / 2;
                 p.frames = t.nFrames = n;
-                updateProgressOnGui();
+                // updateProgressOnGui();
             });
     }
 
     task.progress.frames = 0;
     task.progress.currentFps = 0;
     task.progress.currentKbps = 0;
-
-    (command.listenerCount('stderr') === 1) && command.once('stderr', /**@this {FF} */ function () {
-        /**@type {StrimingTask} */
-        let task = this.task;
-        logger.inf?.('connected', task.streamType);
-        updateState(task.streamType, 'connected');
-        task.retryTimer?.reset();
-        task.beginStaleDetection();
-        task.connected = true;
-    });
-
     command.run();
 }
 
@@ -1116,14 +1134,14 @@ async function startStreamAsync(task, force) {
 // }
 
 
-/**bind websocket events on application start*/
+/** bind websocket events on application start */
 function bindWebsocketEvents() {
     wsCtrl.setConnectCallback(socket => {
-        // logger.dbg?.('ConnectionCallback');
+
         socket.emit('publicIp', data.publicIp);
 
         socket.on('startStream', options => {
-            // logger.dbg?.('Got "startStream" event', options.streamType)
+            logger.inf?.('Received "startStream" event', options.streamType);
             updateUserAction(options.streamType, 'start');
             updateOptions(options.options);
 
@@ -1160,22 +1178,27 @@ function bindWebsocketEvents() {
         });
 
         socket.on('stopStream', streamType => {
-            // logger.dbg?.('Got "stopStream" event', streamType)
+            logger.inf?.('Received "stopStream" event', streamType);
             updateUserAction(streamType, 'stop');
             stopStream(streamType);
         });
 
         socket.on('checkStates', () => {
-            // logger.dbg?.('Got "checkStates" event')
             updateStreamDataOnGui();
         });
 
         socket.on('playerOptions', player => {
-            // logger.dbg?.('Got "playerOptions" event')
             updatePlayerOptions(player);
         });
 
-        // socket.on('disconnect', (reason) => logger.inf?.('disconnect: ' + reason))
+        socket.timer = setInterval((s) => {
+            s.emit('updateProgress', data.progresses);
+        }, 2000, socket);
+
+        socket.on('disconnect', /**@this {socket}*/ function (_reason) {
+            // logger.inf?.('disconnect: ' + reason);
+            clearInterval(this.timer);
+        });
     });
 }
 
@@ -1185,10 +1208,12 @@ function close() {
     let cmd = data.processes.repeatToLocalNginx;
 
     setUserAction(RTL, 'stop');
-    if (cmd?.ffmpegProc) {
-        task_map.get(RTL)?.reset();
-        cmd.removeAllListeners('error');
-        cmd.on('error', () => { }).kill();
+    if (cmd?.isRunning()) {
+        cmd.kill('SIGTERM');
+        // task_map.get(RTL)?.reset();
+        // cmd.removeAllListeners('error')
+        //     .on('error', () => { })
+        //     .kill('SIGTERM');
     }
 }
 
@@ -1212,7 +1237,7 @@ function StrimingTask(streamUrl, streamType) {
     /**@type {boolean} */
     this.connected;
 
-    /**Current number of processed frames for stale detection @type {number}*/
+    /** Current number of processed frames for stale detection @type {number} */
     this.nFrames;
     this.intervalId;
     this.prevnFrame;
@@ -1238,22 +1263,30 @@ StrimingTask.prototype.waitRetry = function () {
 StrimingTask.prototype.beginStaleDetection = function () {
     this.intervalId ??= setInterval(() => {
         logger.dbg?.(`check stale: ${this.prevnFrame} => ${this.nFrames}`, this.streamType);
-        if (!this.connected) return;
+        // if (!this.connected) return;
         if (this.nFrames === this.prevnFrame) {
-            stopStream(this.streamType);
+            this.command.abort();
+            // stopStream(this.streamType);
             return;
         }
         this.prevnFrame = this.nFrames;
     }, config.ffmpeg.monitor.stale_wait).unref();
 };
 
+StrimingTask.prototype.UpdateFrames = function (n) {
+    let p = this.progress;
+    p.currentFps = (n - p.frames) / 2;
+    p.frames = this.nFrames = n;
+};
+
 StrimingTask.prototype.reset = function () {
     this.connected = false;
     this.nFrames = 0;
     this.prevnFrame = 0;
+    this.retryTimer?.reset();
 
     if (this.intervalId) {
-        logger.dbg?.(`Clear stale interval`, this.streamType);
+        logger.dbg?.('Clear stale interval', this.streamType);
         clearInterval(this.intervalId);
         this.intervalId = undefined;
     }
