@@ -40,17 +40,21 @@ class RaisingTimer extends Timer {
     constructor(initialWait, increment) {
         super();
         this.initial = initialWait;
-        this.current = 0;
         this.inc = increment;
+        this._time = 0;
+    }
+
+    get current() {
+        return this._time === 0 ? this.initial : this._time + this.inc;
     }
 
     reset() {
-        this.current = 0;
+        this._time = 0;
     }
 
     wait() {
-        this.current += this.current === 0 ? this.initial : this.inc;
-        return super.wait(this.current);
+        // this.current += this.current === 0 ? this.initial : this.inc;
+        return super.wait(this._time = this.current);
     }
 }
 
