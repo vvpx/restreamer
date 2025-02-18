@@ -909,7 +909,7 @@ async function startStreamAsync(task, force) {
         task.command = command;
 
         command
-            .on('start', function (commandLine) {
+            .on('start', /** @this {FF} command @param {string} commandLine*/ function (commandLine) {
                 /** @type {StrimingTask} */
                 let t = this.task;
                 data.processes[t.streamType] ??= this;
@@ -922,7 +922,7 @@ async function startStreamAsync(task, force) {
                 // }
             })
             .on('end', function () {
-                let t = this.task.reset();
+                /** @type {StrimingTask} */ let t = this.task.reset();
                 let streamType = t.streamType;
                 data.processes[streamType] = null;
                 logger.inf?.(streamType + ': ended normally');
@@ -937,6 +937,7 @@ async function startStreamAsync(task, force) {
                 retryAsync(t);
             })
             .on('error', function (error) {
+                /**@type {StrimingTask} */
                 let t = this.task.reset();
                 data.processes[t.streamType] = null;
                 logger.err?.(error.message, t.streamType);
@@ -1140,41 +1141,52 @@ function bindWebsocketEvents() {
 
         socket.emit('publicIp', data.publicIp);
 
-        socket.on('startStream', options => {
-            logger.inf?.('Received "startStream" event', options.streamType);
-            updateUserAction(options.streamType, 'start');
-            updateOptions(options.options);
+        socket.on('startStream', userData => {
+            let streamType = userData.streamType;
+            if (typeof streamType !== 'string') {
+                logger.err?.(`"startStream" event with "userData.streamType" type <${typeof streamType}>`);
+                return;
+            }
 
-            let task = null;
+            logger.inf?.('Received "startStream" event', streamType);
+
+            let task = task_map.get(streamType);
             let streamUrl = null;
-            switch (options.streamType) {
+
+            if (task && (getState(streamType) !== 'disconnected')) {
+                logger.err?.(`Stream <${streamType}> already running`);
+                return;
+            }
+
+            switch (userData.streamType) {
                 case RTL:
-                    streamUrl = options.src;
-                    task = task_map.get(RTL);
+                    streamUrl = userData.src;
                     if (streamUrl !== data.addresses.srcAddress) {
                         data.addresses.srcAddress = streamUrl;
                         if (task) {
-                            if (task.command) {
-                                task.command.removeAllListeners();
-                                task.command.task = undefined;
-                                task.command = undefined;
-                            }
-                            task_map.delete(RTL);
+                            task.command?.dispose();
+                            task.command = undefined;
+                            task_map.delete(streamType);
                         }
-                        task = new StrimingTask(streamUrl, RTL);
+                        task = new StrimingTask(streamUrl, streamType);
                     }
                     break;
 
                 case RTO:
-                    streamUrl = data.addresses.optionalOutputAddress = options.optionalOutput;
+                    streamUrl = data.addresses.optionalOutputAddress = userData.optionalOutput;
                     break;
 
                 default:
-                    logger.wrn?.(`Uncknown stream type: ${options.streamType}`);
+                    logger.wrn?.(`Unknown stream type: ${streamType}`);
                     break;
             }
 
-            streamUrl && startStreamAsync(task || new StrimingTask(streamUrl, options.streamType));
+            if (streamUrl) {
+                data.options = userData.options;
+                logger.inf?.('Start Stream', streamType);
+                updateUserAction(userData.streamType, 'start');
+                startStreamAsync(task ?? new StrimingTask(streamUrl, userData.streamType));
+            }
         });
 
         socket.on('stopStream', streamType => {
