@@ -104,8 +104,7 @@ class ffmpegShell extends EventEmitter {
         this.ffmpegProc = null;
         this._inputOptions.length = 0;
         this._outputOptions.length = 0;
-        for (let name of this.eventNames)
-            this.removeAllListeners(name);
+        this.removeAllListeners();
     }
 }
 
