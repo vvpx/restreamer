@@ -327,7 +327,6 @@ function writeToPlayerConfig() {
  * @param {string} streamType
  */
 function stopStream(streamType) {
-    updateState(streamType, 'stopped');
     logger.info('Stop streaming', streamType);
 
     /** @type {FF} */
@@ -341,6 +340,8 @@ function stopStream(streamType) {
     if (task) {
         task.cancellRetry();
     }
+
+    updateState(streamType, 'disconnected');
 }
 
 
@@ -846,7 +847,7 @@ async function getOptions(task) {
  * @returns 
  */
 async function startStreamAsync(task, force) {
-    logger.inf?.('Start streaming', task.streamType);
+    logger.inf?.('Starting stream ...', task.streamType);
     task_map.set(task.streamType, task);
 
     if (!force) {
@@ -929,7 +930,7 @@ async function startStreamAsync(task, force) {
 
                 if (data.userActions[streamType] === 'stop') {
                     logger.dbg?.('Skip retry because "stop" has been clicked', streamType);
-                    updateState(streamType, 'disconnected');
+                    // updateState(streamType, 'disconnected');
                     return;
                 }
 
@@ -944,7 +945,7 @@ async function startStreamAsync(task, force) {
 
                 if (data.userActions[t.streamType] === 'stop') {
                     logger.dbg?.('Skip retry since "stop" has been clicked', t.streamType);
-                    updateState(t.streamType, 'disconnected');
+                    // updateState(t.streamType, 'disconnected');
                     return;
                 }
 
@@ -1183,7 +1184,7 @@ function bindWebsocketEvents() {
 
             if (streamUrl) {
                 data.options = userData.options;
-                logger.inf?.('Start Stream', streamType);
+                // logger.inf?.('Start Stream', streamType);
                 updateUserAction(userData.streamType, 'start');
                 startStreamAsync(task ?? new StrimingTask(streamUrl, userData.streamType));
             }

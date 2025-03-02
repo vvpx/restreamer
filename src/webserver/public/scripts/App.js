@@ -1,8 +1,3 @@
-/**
- * @link https://github.com/datarhei/restreamer
- * @copyright 2015 datarhei.org
- * @license Apache-2.0
- */
 'use strict';
 
 var app = window.angular.module('app', [
@@ -31,7 +26,8 @@ app.config(($stateProvider) => {
 app.controller('appController',
     ['$rootScope', '$state', '$http', ($rootScope, $state, $http) => {
         $http.get('authenticated').then((response) => {
-            $rootScope.loggedIn = response.data;
+            $rootScope.loggedIn = response.data.result;
+            $rootScope.token = response.data.auth;
         });
         $rootScope.$watch('loggedIn', (value) => {
             $state.go(value ? 'logged-in' : 'login');

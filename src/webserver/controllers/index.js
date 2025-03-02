@@ -21,17 +21,20 @@ module.exports = app => {
 
         res.json({
             'success': success,
-            'message': message
+            'message': message,
+            'auth': success ? req.sessionID : ''
         });
     });
 
     app.get('/authenticated', (req, res) => {
-        res.json(req.session.authenticated === true);
+        let ans = req.session.authenticated === true;
+        res.json({ result: ans, auth: (ans ? req.sessionID : '')});
     });
 
     app.get('/logout', (req, res) => {
-        req.session.destroy();
-        res.end();
+        delete req.session.authenticated;
+        req.session.destroy(() => res.end());
+        // res.end();
     });
 
     /* Handle NGINX-RTMP token */

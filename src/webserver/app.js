@@ -8,8 +8,8 @@ const crypto = require("node:crypto");
 // express
 const express = require("express");
 const session = require("express-session");
-const cookie = require("cookie");
-const cookieParser = require("cookie-parser");
+// const cookie = require("cookie");
+// const cookieParser = require("cookie-parser");
 // const bodyParser = require("body-parser")
 // const compression = require("compression")
 
@@ -61,7 +61,7 @@ class RestreamerExpressApp {
     /**add automatic parsers for the body*/
     addParsers() {
         this.app.use(express.json()); // bodyParser.json())
-        this.app.use(cookieParser());
+        // this.app.use(cookieParser());
     }
 
     /**add content compression on responses*/
@@ -107,30 +107,50 @@ class RestreamerExpressApp {
     // }
 
     /**enable websocket session validation*/
-    secureSockets() {
-        const val = (handshakeData, accept) => {
-            if (handshakeData.headers.cookie) {
-                this.sessionStore.get(
-                    cookieParser.signedCookie(
-                        cookie.parse(handshakeData.headers.cookie)[this.sessionKey],
-                        this.secretKey
-                    ),
-                    (err, s) => {
-                        if (!err && s && s.authenticated) {
-                            return accept(null, true);
-                        }
-                    }
-                )
-            } else {
-                return accept(null, false);
-            }
-        }
+    // secureSockets() {
+    //     const val = (handshakeData, accept) => {
+    //         if (handshakeData.headers.cookie) {
+    //             this.sessionStore.get(
+    //                 cookieParser.signedCookie(
+    //                     cookie.parse(handshakeData.headers.cookie)[this.sessionKey],
+    //                     this.secretKey
+    //                 ),
+    //                 (err, s) => {
+    //                     if (!err && s && s.authenticated) {
+    //                         return accept(null, true);
+    //                     }
+    //                 }
+    //             )
+    //         } else {
+    //             return accept(null, false);
+    //         }
+    //     }
 
-        this.app.get("io").use(function (socket, next) {
-            val(socket.request, function (err, authorized) {
-                if (err) return next(new Error(err));
-                if (!authorized) return next(new Error("Not authorized"));
-                next();
+    //     this.app.get("io").use(function (socket, next) {
+    //         val(socket.request, function (err, authorized) {
+    //             if (err) return next(new Error(err));
+    //             if (!authorized) return next(new Error("Not authorized"));
+    //             next();
+    //         });
+    //     });
+    // }
+
+    secureSockets() {
+        this.app.get("io").use((socket, next) => {
+            this.sessionStore.get(socket.handshake.auth.token, (err, s) => {
+                logger.dbg?.(`Validate socket: ${err}, ${s?.authenticated}`);
+
+                if (err) {
+                    next(err);
+                    return;
+                }
+
+                if (s?.authenticated) {
+                    next();
+                    return;
+                }
+
+                next(new Error("Not authorized"));
             });
         });
     }
@@ -148,7 +168,7 @@ class RestreamerExpressApp {
         return new Promise(resolve => {
             const server = this.server = this.app.listen(this.app.get("port"), '127.0.0.1', () => {
                 this.app.set("io", new Server(server, { path: "/socket.io" }));
-                // this.secureSockets();
+                this.secureSockets();
                 this.app.set("server", server.address());
                 logger.inf?.("Running on port " + process.env.RS_NODEJS_PORT);
                 resolve();

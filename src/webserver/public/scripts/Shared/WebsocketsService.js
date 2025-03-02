@@ -1,10 +1,3 @@
-/**
- * @file Service to handle websocket connections and events
- * @link https://github.com/datarhei/restreamer
- * @copyright 2015 datarhei.org
- * @license Apache-2.0
- */
-
 /* eslint no-undef: 0*/
 'use strict';
 
@@ -15,7 +8,8 @@ const WebsocketsService = function websocketsService ($rootScope, loggerService)
 
     $rootScope.$watch('loggedIn', (loggedIn) => {
         if (loggedIn) {
-            this.socket = io('/', {path: (window.location.pathname + '/socket.io').replace(/\/{2,}/g, "/")});
+            // this.socket = io('/', { path: (window.location.pathname + '/socket.io').replace(/\/{2,}/g, "/"), auth: { token: $rootScope.token } });
+            this.socket = io({ auth: { token: $rootScope.token } });
             this.loggerService.websocketsNamespace('WS connected');
         } else if (this.socket !== null) {
             this.socket.disconnect();
