@@ -124,7 +124,7 @@
             "global": {
                 "inputOptions": [
                     "-stats",
-                    "-v fatal",
+                    "-v error",
                     "-stats_period 2s",
                     "-err_detect ignore_err",
                     "-fflags nobuffer+genpts"
