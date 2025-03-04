@@ -18,7 +18,6 @@
 *.jar
 *.rar
 *.tar
-*.zip
 
 # Logs and databases #
 ######################
@@ -66,8 +65,8 @@ src/webserver/public/dist/**
 # src/webserver/public/config.js
 # db/**
 heapdump
-Gemfile.lock
 build/*
 !build/trixie.dockerfile
 !build/Dockerfile
+contrib
 /_trash
