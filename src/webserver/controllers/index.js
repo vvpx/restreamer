@@ -1,8 +1,9 @@
 'use strict';
 
 const auth = globalThis.appConfig.auth;
+/**@import {Express} from "express*/
 
-module.exports = app => {
+module.exports = /**@param {Express} app*/ (app) => {
     /* Handle Login POST */
     app.post('/login', (req, res, next) => {
         const username = process.env.RS_USERNAME || auth.username;
@@ -28,13 +29,18 @@ module.exports = app => {
 
     app.get('/authenticated', (req, res) => {
         let ans = req.session.authenticated === true;
-        res.json({ result: ans, auth: (ans ? req.sessionID : '')});
+        res.json({ result: ans, auth: (ans ? req.sessionID : '') });
     });
 
     app.get('/logout', (req, res) => {
-        delete req.session.authenticated;
-        req.session.destroy(() => res.end());
-        // res.end();
+        if (req.session.authenticated === true) {
+            delete req.session.authenticated;
+            req.session.destroy((_err) => {
+                res.clearCookie('restreamer-session').end();
+            });
+            return;
+        }
+        res.end();
     });
 
     /* Handle NGINX-RTMP token */
