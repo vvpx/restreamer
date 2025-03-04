@@ -1,6 +1,6 @@
 'use strict';
 
-/**@typedef {import("../../../classes/RsData")} RsData restreamer data*/
+/**@typedef {import("../../../classes/RsData")} rsdata restreamer data*/
 
 const { Router } = require('express');
 const replace = /\?token=[^\s]+/;
@@ -13,7 +13,7 @@ const version = {
 class apiV1 {
     router;
 
-    /** @type {RsData} */
+    /** @type {rsdata} */
     #srcData;
 
     constructor(srcData = null) {
@@ -71,7 +71,7 @@ class apiV1 {
 
     /**
      * Bind restreamer streams data
-     * @param {RsData} src 
+     * @param {rsdata} src 
      */
     setSrcData(src) {
         this.#srcData = src;

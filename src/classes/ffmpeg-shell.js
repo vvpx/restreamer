@@ -1,13 +1,13 @@
-'use strict'
+'use strict';
 
 const { EventEmitter } = require('node:events');
-const { spawn, ChildProcess } = require('node:child_process');
+const { spawn } = require('node:child_process');
 
 globalThis.appConfig.ffmpeg.options.local_mpegts.outputOptions.push("-y");
 
 
 class ffmpegShell extends EventEmitter {
-    /**@type {ChildProcess} */
+    /**@type {import("node:child_process").ChildProcess} */
     ffmpegProc;
     task;
 
@@ -26,7 +26,7 @@ class ffmpegShell extends EventEmitter {
     }
 
 
-    /**@param {string} name  */
+    /**@param {string} name*/
     setName(name) {
         this._name = name;
         return this;

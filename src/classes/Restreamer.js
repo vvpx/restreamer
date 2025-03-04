@@ -574,7 +574,7 @@ async function restoreProcesses() {
 
     // check if the stream was repeated to an output address
     if (adr.optionalOutputAddress && ['connected', 'connecting'].includes(getState(RTO))) {
-        startStream(new StrimingTask(adr.optionalOutputAddress, RTO), true);
+        startStreamAsync(new StrimingTask(adr.optionalOutputAddress, RTO), true);
     }
     else {
         updateState(RTO, 'disconnected');
@@ -1208,8 +1208,7 @@ function bindWebsocketEvents() {
             s.emit('updateProgress', data.progresses);
         }, 2000, socket);
 
-        socket.on('disconnect', /**@this {socket}*/ function (_reason) {
-            // logger.inf?.('disconnect: ' + reason);
+        socket.on('disconnect', /**@this {socket}*/ function () {
             clearInterval(this.timer);
         });
     });
