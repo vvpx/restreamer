@@ -1,15 +1,11 @@
 //@ts-check
 'use strict';
 
-/**
- * @typedef {import("socket.io").Server} Server
- * @typedef {import("socket.io").Socket} Socket
-*/
+/**@import {Server, Socket} from "socket.io"*/
 
 const logger = require('./Logger')('wsControl');
 const app = require("../webserver/app").app;
-/**@type {Server} */
-var io;
+/**@type {Server} */ var io;
 var connections = 0;
 var _callback;
 
