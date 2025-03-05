@@ -3,9 +3,11 @@
 
 // const http = require('node:http');
 const { spawn, ChildProcess } = require('node:child_process');
-// const logger = require('./Logger')('NGINX');
+/** @typedef @import {Logger} from "./Logger" */
 
-const { nginx: config } = globalThis.appConfig; // require('../../conf/live.json')
+const { nginx: config } = globalThis.appConfig;
+/**@type {ChildProcess} */ var nginx;
+
 // const ping_url = "http://" + config.streaming.ip + ":" + config.streaming.http_port + config.streaming.http_health_path;
 // const timeout = 256;
 
@@ -92,24 +94,21 @@ const { nginx: config } = globalThis.appConfig; // require('../../conf/live.json
 // }
 
 /**
- * 
- * @param {boolean} useSSL 
- * @param {*} logger 
+ * @param {boolean} useSSL - enable SSL
+ * @param {*} [logger]
  * @returns 
  */
 function start(useSSL, logger) {
     logger?.info('Starting nginx...', 'NGINX');
     if (useSSL) logger?.info('Enabling HTTPS', 'NGINX');
-    spawn(config.command, useSSL ? config.args_ssl : config.args, { stdio: ['ignore', 'ignore', 'inherit'] }).unref();
+    nginx = spawn(config.command, useSSL ? config.args_ssl : config.args, { stdio: ['ignore', 'ignore', 'inherit'] });
+    nginx.unref();
     return true;
 }
 
 function close() {
-    // nginx?.kill();
-    // nginx = undefined;
+    nginx?.kill();
+    nginx = undefined;
 }
 
-module.exports = {
-    start,
-    close
-};
+module.exports = { start, close };
